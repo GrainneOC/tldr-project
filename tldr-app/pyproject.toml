@@ -4,4 +4,8 @@ version = "0.1.0"
 description = "This is the Final Year Project completed in spring 2026 as part of the HDip in Computer Science in SETU Waterford. It is a CI/CD pipeline system that deploys a FastAPI application with LLM Wrapper called 'TL;DR: Terms Long; Didn't Read' which summarises long-winded Terms & Conditions into main points and data required. The research focus is a comparison of two open-source container image vulnerability scanning tools; Trivy and Grype."
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+  "fastapi==0.134.0",
+  "uvicorn[standard]==0.41.0",
+]
+
