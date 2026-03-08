@@ -1,2 +1,6 @@
+*.swp
+*.swp
+.venv/
 __pycache__/
 *.pyc
+uv.lock
