@@ -37,5 +37,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build Docker image
-        run: docker build -t tldr-app:ci-build .
+        run: |
+          cd tldr-app
+          docker build -t tldr-app:ci-build .
       
