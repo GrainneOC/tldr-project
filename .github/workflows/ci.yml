@@ -59,7 +59,7 @@ jobs:
         with:
           image-ref: 'tldr-app:ci-build'
           format: 'json'
-          output: 'trivy-report.json'
+          output-file: 'trivy-report.json'
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH,MEDIUM,LOW'
           ignore-unfixed: true
