@@ -90,6 +90,7 @@ jobs:
           fail-build: false          # false until it works and further configuration is added
           output-format: json
           output-file: grype-report.json
+          exit-code: '0' # for comparison runs; later switch to 1
 
       - name: Upload Grype report
         uses: actions/upload-artifact@v4
