@@ -59,11 +59,17 @@ jobs:
         with:
           image-ref: 'tldr-app:ci-build'
           format: 'json'
-          output-file: 'trivy-report.json'
+          output: 'trivy-report.json'
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH,MEDIUM,LOW'
           ignore-unfixed: true
           exit-code: '0'   # for comparison runs; later switch to 1
+
+      - name: Upload Trivy report
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-report
+          path: trivy-report.json
 
   grype-scan:
     runs-on: ubuntu-latest
@@ -84,12 +90,6 @@ jobs:
           fail-build: false          # false until it works and further configuration is added
           output-format: json
           output-file: grype-report.json
-
-      - name: Upload Trivy report
-        uses: actions/upload-artifact@v4
-        with:
-          name: trivy-report
-          path: trivy-report.json
 
       - name: Upload Grype report
         uses: actions/upload-artifact@v4
