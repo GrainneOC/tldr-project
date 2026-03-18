@@ -1,0 +1,2 @@
+# .grype.yaml (repo root) or security/grype.yaml if you pass --config
+fail-on-severity: ""

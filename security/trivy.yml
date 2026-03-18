@@ -1,0 +1,13 @@
+# trivy config
+exit-code: 0
+
+severity:
+  - HIGH
+  - CRITICAL
+
+vulnerability:
+  type:
+    - os
+    - library
+  ignore-unfixed: false
+
