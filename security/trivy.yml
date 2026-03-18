@@ -4,7 +4,8 @@ exit-code: 0
 severity:
   - HIGH
   - CRITICAL
-
+  - MEDIUM
+  - LOW
 vulnerability:
   type:
     - os
