@@ -129,6 +129,9 @@ jobs:
       - name: Normalise Grype report
         run: python scripts/normalize_grype.py
 
+      - name: Compare overlap
+        run: python scripts/compare.py
+
       - name: Upload normalised CSVs
         uses: actions/upload-artifact@v4
         with:
