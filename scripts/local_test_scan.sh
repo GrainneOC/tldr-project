@@ -7,10 +7,18 @@ docker build -t tldr-app:ci-build .
 cd ..
 
 # 2) Run Trivy scan 
-trivy image --format json -o reports/trivy-report.json tldr-app:ci-build
+#trivy image --format json -o reports/trivy-report.json tldr-app:ci-build
+trivy image \
+  --format json \
+  --output reports/trivy-report.json \
+  --config security/trivy.yml \
+  --ignore-policy security/trivy-ignore.rego \
+  tldr-app:ci-build
 
 # 3) Run Grype scan
-grype tldr-app:ci-build -o json > reports/grype-report.json
+grype tldr-app:ci-build \
+  --config security/grype.yml \
+  -o json > reports/grype-report.json
 
 # 4) Normalise both reports
 python scripts/normalize_trivy.py
