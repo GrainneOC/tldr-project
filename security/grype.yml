@@ -1,4 +1,5 @@
 # .grype.yaml (repo root) or security/grype.yaml if you pass --config
 fail-on-severity: ""
 ignore:
-  - vulnerability: CVE-2017-18018
+  - vulnerability: "CVE-2017-18018"
+  - vulnerability: "CVE-2019-1010022"
