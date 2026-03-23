@@ -140,3 +140,31 @@ jobs:
             reports/trivy-normalized.csv
             reports/grype-normalized.csv
 
+  publish-image:
+    runs-on: ubuntu-latest
+    needs: normalize-reports
+    if: github.ref == 'refs/heads/main'
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_NAME: grainneoc/tldr-app
+      IMAGE_ID: ghcr.io/grainneoc/tldr-app:${{ github.sha }}
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Build Docker image
+        run: |
+          cd tldr-app
+          docker build -t $IMAGE_ID .
+
+      - name: Push image to GHCR
+        run: docker push $IMAGE_ID
+        
