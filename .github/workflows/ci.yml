@@ -83,6 +83,19 @@ jobs:
           output-format: json
           output-file: reports/grype-report.json
 
+      - name: Set artifact name
+        run: |
+          SAFE_IMAGE=$(echo "${{ matrix.image }}" | sed 's#[^A-Za-z0-9_-]#_#g')
+          echo "ARTIFACT_NAME=scan-results-${{ matrix.kind }}-${SAFE_IMAGE}" >> $GITHUB_ENV
+
+      - name: Upload scan reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: |
+            reports/trivy-report.json
+            reports/grype-report.json
+
       - name: Upload scan reports
         uses: actions/upload-artifact@v4
         with:
