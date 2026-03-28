@@ -37,13 +37,17 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - image: tldr-app:ci-build
+          - label: tldr-app
+            image: tldr-app:ci-build
             kind: cd
-          - image: alpine:3.18
+          - label: alpine
+            image: alpine:3.18
             kind: ci
-          - image: debian:12
+          - label: debian
+            image: debian:12
             kind: ci
-          - image: python:3.14-slim
+          - label: python
+            image: python:3.14-slim
             kind: ci
 
     steps:
@@ -83,23 +87,10 @@ jobs:
           output-format: json
           output-file: reports/grype-report.json
 
-      - name: Set artifact name
-        run: |
-          SAFE_IMAGE=$(echo "${{ matrix.image }}" | sed 's#[^A-Za-z0-9_-]#_#g')
-          echo "ARTIFACT_NAME=scan-results-${{ matrix.kind }}-${SAFE_IMAGE}" >> $GITHUB_ENV
-
       - name: Upload scan reports
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.ARTIFACT_NAME }}
-          path: |
-            reports/trivy-report.json
-            reports/grype-report.json
-
-      - name: Upload scan reports
-        uses: actions/upload-artifact@v4
-        with:
-          name: scan-results-${{ matrix.kind }}-${{ matrix.image }}
+          name: scan-results-${{ matrix.kind }}-${{ matrix.label }}
           path: |
             reports/trivy-report.json
             reports/grype-report.json
