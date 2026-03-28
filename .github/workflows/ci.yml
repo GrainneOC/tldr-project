@@ -44,174 +44,74 @@ jobs:
           cd tldr-app
           docker build -t tldr-app:ci-build .
 
-  trivy-scan:
+  scan-all-images:
     runs-on: ubuntu-latest
     needs: docker-build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: tldr-app:ci-build
+            kind: cd
+          - image: alpine:3.18
+            kind: ci
+          - image: debian:12
+            kind: ci
+          - image: python:3.14-slim
+            kind: ci
 
     steps:
       - name: Check out code
         uses: actions/checkout@v4
 
-      - name: Build Docker image for scanning
+      - name: Build app image
+        if: matrix.kind == 'cd'
         run: |
           cd tldr-app
           docker build -t tldr-app:ci-build .
 
-      - name: Run Trivy scan (JSON)
-        uses: aquasecurity/trivy-action@0.35.0
-        with:
-          image-ref: 'tldr-app:ci-build'
-          format: 'json'
-          output: 'reports/trivy-report.json'
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH,MEDIUM,LOW'
-          ignore-unfixed: true
-          exit-code: '0'   # for comparison runs; later switch to 1
-
-      - name: Upload Trivy report
-        uses: actions/upload-artifact@v4
-        with:
-          name: trivy-report
-          path: reports/trivy-report.json
-
-  grype-scan:
-    runs-on: ubuntu-latest
-    needs: docker-build
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Build image
-        run: |
-          cd tldr-app
-          docker build -t tldr-app:ci-build .
-
-      - name: Scan with Grype via Anchore action
-        uses: anchore/scan-action@v6
-        with:
-          image: "tldr-app:ci-build"
-          fail-build: false         
-          severity-cutoff: critical
-          output-format: json
-          output-file: reports/grype-report.json
-
-      - name: Upload Grype report
-        uses: actions/upload-artifact@v4
-        with:
-          name: grype-report
-          path: reports/grype-report.json
-
-  normalize-reports:
-    runs-on: ubuntu-latest
-    needs: [trivy-scan, grype-scan]
-
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Download Trivy report
-        uses: actions/download-artifact@v4
-        with:
-          name: trivy-report
-          path: reports
-
-      - name: Download Grype report
-        uses: actions/download-artifact@v4
-        with:
-          name: grype-report
-          path: reports
-
-      - name: Normalise Trivy report
-        run: python scripts/normalize_trivy.py
-
-      - name: Normalise Grype report
-        run: python scripts/normalize_grype.py
-
-      - name: Compare overlap
-        run: python scripts/compare.py
-
-      - name: Upload normalised CSVs
-        uses: actions/upload-artifact@v4
-        with:
-          name: normalized-reports
-          path: |
-            reports/trivy-normalized.csv
-            reports/grype-normalized.csv
-
-  policy-check:
-    runs-on: ubuntu-latest
-    needs: normalize-reports
-
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
+      - name: Pull base image
+        if: matrix.kind == 'ci'
+        run: docker pull ${{ matrix.image }}
 
       - name: Prepare reports directory
         run: mkdir -p reports
 
-      - name: Download normalised reports
-        uses: actions/download-artifact@v4
+      - name: Run Trivy scan (JSON)
+        uses: aquasecurity/trivy-action@0.35.0
         with:
-          name: normalized-reports
-          path: reports
+          image-ref: ${{ matrix.image }}
+          format: json
+          output: reports/trivy-report.json
+          vuln-type: os,library
+          severity: CRITICAL,HIGH,MEDIUM,LOW
+          ignore-unfixed: true
+          exit-code: 0
 
-      - name: Run policy check
-        run: python scripts/policy-fail-critical.py reports/trivy-normalized.csv reports/grype-normalized.csv
+      - name: Run Grype scan (JSON)
+        uses: anchore/scan-action@v6
+        with:
+          image: ${{ matrix.image }}
+          fail-build: false
+          severity-cutoff: critical
+          output-format: json
+          output-file: reports/grype-report.json
 
-      - name: Upload fixable report
+      - name: Upload scan reports
         uses: actions/upload-artifact@v4
         with:
-          name: fixable-report
-          path: reports/fixable-findings.json
+          name: scan-results-${{ matrix.kind }}-${{ strategy.job-index }}
+          path: |
+            reports/trivy-report.json
+            reports/grype-report.json
 
-  publish-image:
+  normalize-reports:
     runs-on: ubuntu-latest
-    needs: policy-check
-    if: github.ref == 'refs/heads/main'
-    permissions:
-      contents: write
-    env:
-      REGISTRY: ghcr.io
-      IMAGE_NAME: grainneoc/tldr-app
-      IMAGE_ID: ghcr.io/grainneoc/tldr-app:${{ github.sha }}
+    needs: scan-all-images
 
     steps:
       - name: Check out code
         uses: actions/checkout@v4
 
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GHCR_TOKEN }}
-
-      - name: Build Docker image
-        run: |
-          cd tldr-app
-          docker build -t $IMAGE_ID .
-
-      - name: Push image to GHCR
-        run: docker push $IMAGE_ID
-
-     - name: Update Helm values image tag
-        uses: fjogeleit/yaml-update-action@v0.16.0
-        with:
-          valueFile: tldr-app-chart/values.yaml
-          propertyPath: image.tag
-          value: ${{ github.sha }}
-          commitChange: true
-          message: "Update image tag to ${{ github.sha }}"
-
-      - name: Commit and push updated values
-        run: echo "Committed by yaml-update-action"    
+      - name: Set up Python
+        uses: actionsYes
