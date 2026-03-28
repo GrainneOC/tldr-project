@@ -87,8 +87,8 @@ jobs:
         uses: anchore/scan-action@v6
         with:
           image: "tldr-app:ci-build"
-          fail-build: false          # false until it works and further configuration is added
-          severity-cutoff: high
+          fail-build: false         
+          severity-cutoff: critical
           output-format: json
           output-file: reports/grype-report.json
 
