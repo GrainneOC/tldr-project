@@ -12,6 +12,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -30,70 +31,79 @@ jobs:
         run: |
           if [ -d tests ]; then pytest -q; else echo "No tests yet"; fi
 
-  scan-images:
+  docker-build:
     runs-on: ubuntu-latest
     needs: test
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - image: tldr-app:ci-build
-            kind: cd
-          - image: alpine:3.18
-            kind: ci
-          - image: debian:12
-            kind: ci
-          - image: python:3.14-slim
-            kind: ci
 
     steps:
       - name: Check out code
         uses: actions/checkout@v4
 
-      - name: Build app image
-        if: matrix.kind == 'cd'
+      - name: Build Docker image
         run: |
           cd tldr-app
           docker build -t tldr-app:ci-build .
 
-      - name: Pull base image
-        if: matrix.kind == 'ci'
-        run: docker pull ${{ matrix.image }}
+  trivy-scan:
+    runs-on: ubuntu-latest
+    needs: docker-build
 
-      - name: Prepare reports directory
-        run: mkdir -p reports
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image for scanning
+        run: |
+          cd tldr-app
+          docker build -t tldr-app:ci-build .
 
       - name: Run Trivy scan (JSON)
         uses: aquasecurity/trivy-action@0.35.0
         with:
-          image-ref: ${{ matrix.image }}
-          format: json
-          output: reports/trivy-report.json
-          vuln-type: os,library
-          severity: CRITICAL,HIGH,MEDIUM,LOW
+          image-ref: 'tldr-app:ci-build'
+          format: 'json'
+          output: 'reports/trivy-report.json'
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH,MEDIUM,LOW'
           ignore-unfixed: true
-          exit-code: 0
+          exit-code: '0'   # for comparison runs; later switch to 1
 
-      - name: Run Grype scan (JSON)
+      - name: Upload Trivy report
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-report
+          path: reports/trivy-report.json
+
+  grype-scan:
+    runs-on: ubuntu-latest
+    needs: docker-build
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: |
+          cd tldr-app
+          docker build -t tldr-app:ci-build .
+
+      - name: Scan with Grype via Anchore action
         uses: anchore/scan-action@v6
         with:
-          image: ${{ matrix.image }}
-          fail-build: false
+          image: "tldr-app:ci-build"
+          fail-build: false         
           severity-cutoff: critical
           output-format: json
           output-file: reports/grype-report.json
 
-      - name: Upload scan reports
+      - name: Upload Grype report
         uses: actions/upload-artifact@v4
         with:
-          name: scan-results-${{ matrix.kind }}-${{ matrix.image }}
-          path: |
-            reports/trivy-report.json
-            reports/grype-report.json
+          name: grype-report
+          path: reports/grype-report.json
 
   normalize-reports:
     runs-on: ubuntu-latest
-    needs: scan-images
+    needs: [trivy-scan, grype-scan]
 
     steps:
       - name: Check out code
@@ -104,12 +114,17 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Download all scan artifacts
+      - name: Download Trivy report
         uses: actions/download-artifact@v4
         with:
-          pattern: scan-results-*
+          name: trivy-report
           path: reports
-          merge-multiple: true
+
+      - name: Download Grype report
+        uses: actions/download-artifact@v4
+        with:
+          name: grype-report
+          path: reports
 
       - name: Normalise Trivy report
         run: python scripts/normalize_trivy.py
@@ -159,3 +174,44 @@ jobs:
           name: fixable-report
           path: reports/fixable-findings.json
 
+  publish-image:
+    runs-on: ubuntu-latest
+    needs: policy-check
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_NAME: grainneoc/tldr-app
+      IMAGE_ID: ghcr.io/grainneoc/tldr-app:${{ github.sha }}
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Build Docker image
+        run: |
+          cd tldr-app
+          docker build -t $IMAGE_ID .
+
+      - name: Push image to GHCR
+        run: docker push $IMAGE_ID
+
+     - name: Update Helm values image tag
+        uses: fjogeleit/yaml-update-action@v0.16.0
+        with:
+          valueFile: tldr-app-chart/values.yaml
+          propertyPath: image.tag
+          value: ${{ github.sha }}
+          commitChange: true
+          message: "Update image tag to ${{ github.sha }}"
+
+      - name: Commit and push updated values
+        run: echo "Committed by yaml-update-action"    
