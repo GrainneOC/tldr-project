@@ -1,3 +1,6 @@
+permissions:
+  contents: write
+
 name: CI
 
 on:
@@ -173,8 +176,10 @@ jobs:
 
   publish-image:
     runs-on: ubuntu-latest
-    needs: normalize-reports
+    needs: policy-check
     if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
     env:
       REGISTRY: ghcr.io
       IMAGE_NAME: grainneoc/tldr-app
@@ -198,4 +203,15 @@ jobs:
 
       - name: Push image to GHCR
         run: docker push $IMAGE_ID
-        
+
+     - name: Update Helm values image tag
+        uses: fjogeleit/yaml-update-action@v0.16.0
+        with:
+          valueFile: tldr-app-chart/values.yaml
+          propertyPath: image.tag
+          value: ${{ github.sha }}
+          commitChange: true
+          message: "Update image tag to ${{ github.sha }}"
+
+      - name: Commit and push updated values
+        run: echo "Committed by yaml-update-action"    
