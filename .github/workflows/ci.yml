@@ -153,6 +153,9 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Prepare reports directory
+        run: mkdir -p reports
+
       - name: Download normalised reports
         uses: actions/download-artifact@v4
         with:
@@ -160,13 +163,13 @@ jobs:
           path: reports
 
       - name: Run policy check
-        run: python scripts/policy.py reports/trivy-normalized.csv
+        run: python scripts/policy-fail-critical.py reports/trivy-normalized.csv reports/grype-normalized.csv
 
       - name: Upload fixable report
         uses: actions/upload-artifact@v4
         with:
           name: fixable-report
-          path: reports/trivy-normalized-fixable.json
+          path: reports/fixable-findings.json
 
   publish-image:
     runs-on: ubuntu-latest
