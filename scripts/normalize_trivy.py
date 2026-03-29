@@ -2,7 +2,7 @@ import json
 import csv
 from pathlib import Path
 
-TRIVY_PATH = Path("reports/trivy-report.json")
+REPORTS_ROOT = Path("reports")
 OUT_PATH = Path("reports/trivy-normalized.csv")
 
 def load_trivy(path):
@@ -10,11 +10,14 @@ def load_trivy(path):
     results = data.get("Results", [])
     rows = []
 
+    artifact_name = path.parts[1] if len(path.parts) > 1 else "unknown"
+
     for res in results:
         target = res.get("Target", "")
         for vuln in res.get("Vulnerabilities", []) or []:
             rows.append({
                 "tool": "trivy",
+                "artifact": artifact_name,
                 "target": target,
                 "vuln_id": vuln.get("VulnerabilityID", ""),
                 "severity": vuln.get("Severity", ""),
@@ -27,9 +30,14 @@ def load_trivy(path):
     return rows
 
 def main():
-    rows = load_trivy(TRIVY_PATH)
+    all_rows = []
+
+    for path in REPORTS_ROOT.glob("scan-results-*/trivy-report.json"):
+        all_rows.extend(load_trivy(path))
+
     fieldnames = [
         "tool",
+        "artifact",
         "target",
         "vuln_id",
         "severity",
@@ -42,9 +50,9 @@ def main():
     with OUT_PATH.open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
-        writer.writerows(rows)
+        writer.writerows(all_rows)
 
-    print(f"Wrote {len(rows)} rows to {OUT_PATH}")
+    print(f"Wrote {len(all_rows)} rows to {OUT_PATH}")
 
 if __name__ == "__main__":
     main()
