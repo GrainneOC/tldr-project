@@ -202,13 +202,24 @@ jobs:
         run: docker push $IMAGE_ID
 
       - name: Update Helm values image tag
-        uses: fjogeleit/yaml-update-action@v0.16.0
-        with:
-          valueFile: tldr-app-chart/values.yaml
-          propertyPath: image.tag
-          value: ${{ github.sha }}
-          commitChange: true
-          message: "Update image tag to ${{ github.sha }}"
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import yaml
+
+          path = Path("tldr-app-chart/values.yaml")
+          data = yaml.safe_load(path.read_text())
+          data["image"]["tag"] = "${{ github.sha }}"
+          path.write_text(yaml.safe_dump(data, sort_keys=False))
+          PY
+
+      - name: Commit and push updated values  
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tldr-app-chart/values.yaml
+          git commit -m "Update image tag to ${{ github.sha }}" || exit 0
+          git push origin HEAD:main
 
       - name: Commit and push updated values
         run: echo "Committed by yaml-update-action"    
