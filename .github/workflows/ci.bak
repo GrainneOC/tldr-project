@@ -1,3 +1,6 @@
+permissions:
+  contents: write
+
 name: CI
 
 on:
@@ -87,8 +90,8 @@ jobs:
         uses: anchore/scan-action@v6
         with:
           image: "tldr-app:ci-build"
-          fail-build: false          # false until it works and further configuration is added
-          severity-cutoff: high
+          fail-build: false         
+          severity-cutoff: critical
           output-format: json
           output-file: reports/grype-report.json
 
@@ -201,7 +204,7 @@ jobs:
       - name: Push image to GHCR
         run: docker push $IMAGE_ID
 
-      - name: Update Helm values image tag
+     - name: Update Helm values image tag
         uses: fjogeleit/yaml-update-action@v0.16.0
         with:
           valueFile: tldr-app-chart/values.yaml

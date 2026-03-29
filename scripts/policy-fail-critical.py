@@ -4,17 +4,16 @@ import json
 import sys
 from pathlib import Path
 
+REPORTS_ROOT = Path("reports")
 
 def read_rows(path: Path):
     with path.open(newline="", encoding="utf-8") as f:
         return list(csv.DictReader(f))
 
-
 def is_fixable(row):
     fixed_version = (row.get("fixed_version") or "").strip()
     fix_state = (row.get("fix_state") or "").strip().lower()
     return bool(fixed_version) or fix_state in {"fixed", "fix available", "available"}
-
 
 def main():
     if len(sys.argv) < 3:
@@ -35,7 +34,8 @@ def main():
     print(f"Fixable findings: {len(fixable)}")
     print(f"Fixable Critical findings: {len(fixable_critical)}")
 
-    out_json = trivy_csv.with_name("fixable-findings.json")
+    REPORTS_ROOT.mkdir(parents=True, exist_ok=True)
+    out_json = REPORTS_ROOT / "fixable-findings.json"
     with out_json.open("w", encoding="utf-8") as f:
         json.dump(fixable, f, indent=2)
 
@@ -48,7 +48,5 @@ def main():
     print("PASS: policy satisfied")
     sys.exit(0)
 
-
 if __name__ == "__main__":
     main()
-
