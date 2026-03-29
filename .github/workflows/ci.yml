@@ -64,6 +64,9 @@ jobs:
         if: matrix.kind == 'ci'
         run: docker pull ${{ matrix.image }}
 
+      - name: Prepare reports directory
+        run: mkdir -p reports/${{ matrix.label }}
+
       - name: Run Trivy scan (JSON)
         uses: aquasecurity/trivy-action@0.35.0
         with:
