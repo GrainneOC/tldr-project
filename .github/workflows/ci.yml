@@ -64,9 +64,6 @@ jobs:
         if: matrix.kind == 'ci'
         run: docker pull ${{ matrix.image }}
 
-      - name: Prepare reports directory
-        run: mkdir -p reports
-
       - name: Run Trivy scan (JSON)
         uses: aquasecurity/trivy-action@0.35.0
         with:
@@ -113,7 +110,6 @@ jobs:
         with:
           pattern: scan-results-*
           path: reports
-          merge-multiple: true
 
       - name: Normalise Trivy report
         run: python scripts/normalize_trivy.py
@@ -144,9 +140,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-
-      - name: Prepare reports directory
-        run: mkdir -p reports
 
       - name: Download normalised reports
         uses: actions/download-artifact@v4
