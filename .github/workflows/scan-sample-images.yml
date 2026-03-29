@@ -50,9 +50,13 @@ jobs:
         uses: anchore/scan-action/download-grype@v4
 
       - name: Run Grype scan
+        env:
+          GRYPE_DB_AUTO_UPDATE: "true"
+          GRYPE_DB_MAX_ALLOWED_BUILT_AGE: "720h"   # 30 days
         run: |
+          grype db update
           grype ${{ matrix.image }} -o json > reports/grype-${{ steps.names.outputs.safe_name }}.json
-
+      
       - name: Copy Trivy report into expected path
         run: cp reports/trivy-${{ steps.names.outputs.safe_name }}.json reports/trivy-report.json
 
