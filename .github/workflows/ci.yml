@@ -66,6 +66,9 @@ jobs:
 
       - name: Prepare reports directory
         run: mkdir -p reports/${{ matrix.label }}
+      
+      - name: Start Trivy timer
+        run: echo "TRIVY_START=$(date +%s)" >> $GITHUB_ENV
 
       - name: Run Trivy scan (JSON)
         uses: aquasecurity/trivy-action@0.35.0
@@ -78,6 +81,16 @@ jobs:
           ignore-unfixed: true
           exit-code: 0
 
+      - name: Stop Trivy timer
+        run: |
+          end=$(date +%s)
+          trivy_time=$((end - TRIVY_START))
+          echo "tool,image_label,image_ref,seconds" > reports/${{ matrix.label }}/scan-times.csv
+          echo "trivy,${{ matrix.label }},${{ matrix.image }},${trivy_time}" >> reports/${{ matrix.label }}/scan-times.csv
+
+      - name: Start Grype timer
+        run: echo "GRYPE_START=$(date +%s)" >> $GITHUB_ENV
+
       - name: Run Grype scan (JSON)
         uses: anchore/scan-action@v6
         with:
@@ -86,6 +99,12 @@ jobs:
           severity-cutoff: critical
           output-format: json
           output-file: reports/${{ matrix.label }}/grype-report.json
+
+      - name: Stop Grype timer
+        run: |
+          end=$(date +%s)
+          grype_time=$((end - GRYPE_START))
+          echo "grype,${{ matrix.label }},${{ matrix.image }},${grype_time}" >> reports/${{ matrix.label }}/scan-times.csv
 
       - name: Upload scan reports
         uses: actions/upload-artifact@v4
