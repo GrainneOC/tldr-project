@@ -86,11 +86,6 @@ jobs:
           grype_time=$((end - GRYPE_START))
           echo "grype,tldr-app,tldr-app:ci-build,${grype_time}" >> reports/scan-times.csv
 
-      - name: Show generated scan files
-        run: |
-          pwd
-          find reports -maxdepth 2 -type f | sort
-
       - name: Upload scan reports
         uses: actions/upload-artifact@v4
         with:
@@ -137,6 +132,7 @@ jobs:
           path: |
             reports/trivy-normalized.csv
             reports/grype-normalized.csv
+            reports/overlap-report.csv
             reports/scan-times.csv
 
   policy-check:
@@ -166,3 +162,44 @@ jobs:
         with:
           name: fixable-report
           path: reports/fixable-findings.json
+
+  persist-reports:
+    runs-on: ubuntu-latest
+    needs: policy-check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download normalised reports
+        uses: actions/download-artifact@v4
+        with:
+          name: normalized-reports
+          path: reports
+
+      - name: Download fixable report
+        uses: actions/download-artifact@v4
+        with:
+          name: fixable-report
+          path: reports
+
+      - name: Show final report files
+        run: |
+          find reports -maxdepth 3 -type f | sort
+
+      - name: Commit generated reports to repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add reports/
+
+          if git diff --cached --quiet; then
+            echo "No report changes to commit"
+          else
+            git commit -m "chore: update scan outputs [skip ci]"
+            git push
+          fi
