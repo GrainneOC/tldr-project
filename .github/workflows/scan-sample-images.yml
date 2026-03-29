@@ -71,6 +71,9 @@ jobs:
       - name: Save Grype normalized CSV per image
         run: cp reports/grype-normalized.csv reports/grype-normalized-${{ steps.names.outputs.safe_name }}.csv
 
+      - name: Compare current image Trivy vs Grype
+        run: python scripts/compare.py
+
       - name: Upload reports for this image
         uses: actions/upload-artifact@v4
         with:
