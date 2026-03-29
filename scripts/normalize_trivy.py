@@ -2,64 +2,51 @@ import json
 import csv
 from pathlib import Path
 
-REPORTS_ROOT = Path("reports")
+TRIVY_PATH = Path("reports/trivy-report.json")
+OUT_PATH = Path("reports/trivy-normalized.csv")
 
-FIELDNAMES = [
-    "tool",
-    "artifact",
-    "target",
-    "vuln_id",
-    "severity",
-    "package_name",
-    "installed_version",
-    "fix_state",
-    "fixed_version",
-]
-
-def load_trivy(path, artifact_name):
+def load_trivy(path: Path):
     data = json.loads(path.read_text(encoding="utf-8"))
-    results = data.get("Results", [])
+    results = data.get("Results") or []
+    if not isinstance(results, list):
+        results = []
+
     rows = []
 
     for res in results:
+        if not isinstance(res, dict):
+            continue
+
         target = res.get("Target", "")
-        for vuln in res.get("Vulnerabilities", []) or []:
+        vulns = res.get("Vulnerabilities") or []
+        if not isinstance(vulns, list):
+            continue
+
+        for vuln in vulns:
+            if not isinstance(vuln, dict):
+                continue
+
             rows.append({
                 "tool": "trivy",
-                "artifact": artifact_name,
                 "target": target,
                 "vuln_id": vuln.get("VulnerabilityID", ""),
                 "severity": vuln.get("Severity", ""),
                 "package_name": vuln.get("PkgName", ""),
-                "installed_version": vuln.get("InstalledVersion", ""),
-                "fix_state": vuln.get("Status", ""),
-                "fixed_version": vuln.get("FixedVersion", ""),
             })
 
     return rows
 
-def write_csv(path, rows):
-    with path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=FIELDNAMES)
+def main():
+    rows = load_trivy(TRIVY_PATH)
+    fieldnames = ["tool", "target", "vuln_id", "severity", "package_name"]
+
+    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with OUT_PATH.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rows)
 
-def main():
-    all_rows = []
-    report_paths = sorted(REPORTS_ROOT.rglob("trivy-report.json"))
-
-    for path in report_paths:
-        artifact_name = path.parent.name if path.parent != REPORTS_ROOT else "app"
-        rows = load_trivy(path, artifact_name)
-        all_rows.extend(rows)
-
-        out_path = REPORTS_ROOT / f"trivy-normalized-{artifact_name}.csv"
-        write_csv(out_path, rows)
-        print(f"Wrote {len(rows)} rows to {out_path}")
-
-    stable_out = REPORTS_ROOT / "trivy-normalized.csv"
-    write_csv(stable_out, all_rows)
-    print(f"Wrote {len(all_rows)} total rows to {stable_out}")
+    print(f"Wrote {len(rows)} rows to {OUT_PATH}")
 
 if __name__ == "__main__":
     main()
