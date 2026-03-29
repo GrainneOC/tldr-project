@@ -32,7 +32,7 @@ def load_trivy(path):
 def main():
     all_rows = []
 
-    for path in REPORTS_ROOT.glob("scan-results-*/trivy-report.json"):
+    for path in REPORTS_ROOT.rglob("trivy-report.json"):
         all_rows.extend(load_trivy(path))
 
     fieldnames = [
