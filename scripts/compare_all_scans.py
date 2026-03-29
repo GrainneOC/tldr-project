@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 
-DEFAULT_FIELDS = ["vulnid", "packagename", "installedversion"]
+DEFAULT_FIELDS = ["vuln_id", "package_name", "installed_version"]
 
 
 def normalize_value(value):
