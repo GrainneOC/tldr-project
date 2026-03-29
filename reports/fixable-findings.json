@@ -1,0 +1,79 @@
+[
+  {
+    "tool": "trivy",
+    "artifact": "app",
+    "target": "Python",
+    "vuln_id": "CVE-2026-1703",
+    "severity": "LOW",
+    "package_name": "pip",
+    "installed_version": "25.3",
+    "fix_state": "fixed",
+    "fixed_version": "26.0"
+  },
+  {
+    "tool": "trivy",
+    "artifact": "app",
+    "target": "Python",
+    "vuln_id": "CVE-2024-47081",
+    "severity": "MEDIUM",
+    "package_name": "requests",
+    "installed_version": "2.32.3",
+    "fix_state": "fixed",
+    "fixed_version": "2.32.4"
+  },
+  {
+    "tool": "grype",
+    "artifact": "app",
+    "target": "",
+    "vuln_id": "CVE-2025-15366",
+    "severity": "Medium",
+    "package_name": "python",
+    "installed_version": "3.13.12",
+    "fix_state": "fixed",
+    "fixed_version": "3.15.0a6"
+  },
+  {
+    "tool": "grype",
+    "artifact": "app",
+    "target": "",
+    "vuln_id": "CVE-2025-15367",
+    "severity": "Medium",
+    "package_name": "python",
+    "installed_version": "3.13.12",
+    "fix_state": "fixed",
+    "fixed_version": "3.15.0a6"
+  },
+  {
+    "tool": "grype",
+    "artifact": "app",
+    "target": "",
+    "vuln_id": "GHSA-9hjg-9r4m-mvj7",
+    "severity": "Medium",
+    "package_name": "requests",
+    "installed_version": "2.32.3",
+    "fix_state": "fixed",
+    "fixed_version": "2.32.4"
+  },
+  {
+    "tool": "grype",
+    "artifact": "app",
+    "target": "",
+    "vuln_id": "GHSA-6vgw-5pg2-w6jp",
+    "severity": "Low",
+    "package_name": "pip",
+    "installed_version": "25.3",
+    "fix_state": "fixed",
+    "fixed_version": "26.0"
+  },
+  {
+    "tool": "grype",
+    "artifact": "app",
+    "target": "",
+    "vuln_id": "GHSA-gc5v-m9x4-r6x2",
+    "severity": "Medium",
+    "package_name": "requests",
+    "installed_version": "2.32.3",
+    "fix_state": "fixed",
+    "fixed_version": "2.33.0"
+  }
+]
