@@ -204,7 +204,7 @@ jobs:
       - name: Push image to GHCR
         run: docker push $IMAGE_ID
 
-     - name: Update Helm values image tag
+      - name: Update Helm values image tag
         uses: fjogeleit/yaml-update-action@v0.16.0
         with:
           valueFile: tldr-app-chart/values.yaml
