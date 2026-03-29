@@ -1,0 +1,82 @@
+name: Scan Sample Images
+
+on:
+  workflow_dispatch:
+
+jobs:
+  scan-images:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - alpine:3.18
+          - debian:12
+          - python:3.14-slim
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Prepare reports directory
+        run: mkdir -p reports
+
+      - name: Pull image
+        run: docker pull ${{ matrix.image }}
+
+      - name: Make safe image tag for filenames
+        id: names
+        run: |
+          SAFE_NAME=$(echo "${{ matrix.image }}" | sed 's#[/:]#-#g')
+          echo "safe_name=$SAFE_NAME" >> $GITHUB_OUTPUT
+
+      - name: Run Trivy scan
+        uses: aquasecurity/trivy-action@0.35.0
+        with:
+          image-ref: ${{ matrix.image }}
+          format: json
+          output: reports/trivy-${{ steps.names.outputs.safe_name }}.json
+          vuln-type: os,library
+          severity: CRITICAL,HIGH,MEDIUM,LOW
+          exit-code: 0
+
+      - name: Install Grype
+        uses: anchore/scan-action/download-grype@v4
+
+      - name: Run Grype scan
+        run: |
+          grype ${{ matrix.image }} -o json > reports/grype-${{ steps.names.outputs.safe_name }}.json
+
+      - name: Copy Trivy report into expected path
+        run: cp reports/trivy-${{ steps.names.outputs.safe_name }}.json reports/trivy-report.json
+
+      - name: Copy Grype report into expected path
+        run: cp reports/grype-${{ steps.names.outputs.safe_name }}.json reports/grype-report.json
+
+      - name: Normalise Trivy report
+        run: python scripts/normalize_trivy.py
+
+      - name: Save Trivy normalized CSV per image
+        run: cp reports/trivy-normalized.csv reports/trivy-normalized-${{ steps.names.outputs.safe_name }}.csv
+
+      - name: Normalise Grype report
+        run: python scripts/normalize_grype.py
+
+      - name: Save Grype normalized CSV per image
+        run: cp reports/grype-normalized.csv reports/grype-normalized-${{ steps.names.outputs.safe_name }}.csv
+
+      - name: Upload reports for this image
+        uses: actions/upload-artifact@v4
+        with:
+          name: scan-${{ steps.names.outputs.safe_name }}
+          path: |
+            reports/trivy-${{ steps.names.outputs.safe_name }}.json
+            reports/grype-${{ steps.names.outputs.safe_name }}.json
+            reports/trivy-normalized-${{ steps.names.outputs.safe_name }}.csv
+            reports/grype-normalized-${{ steps.names.outputs.safe_name }}.csv
