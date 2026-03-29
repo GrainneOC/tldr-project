@@ -1,3 +1,3 @@
-tool,artifact,target,vuln_id,severity,package_name,installed_version,fix_state,fixed_version
-trivy,app,Python,CVE-2026-1703,LOW,pip,25.3,fixed,26.0
-trivy,app,Python,CVE-2024-47081,MEDIUM,requests,2.32.3,fixed,2.32.4
+tool,target,vuln_id,severity,package_name
+trivy,Python,CVE-2026-1703,LOW,pip
+trivy,Python,CVE-2024-47081,MEDIUM,requests

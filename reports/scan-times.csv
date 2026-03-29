@@ -1,3 +1,3 @@
 tool,image_label,image_ref,seconds
-trivy,tldr-app,tldr-app:ci-build,11
-grype,tldr-app,tldr-app:ci-build,37
+trivy,tldr-app,tldr-app:ci-build,10
+grype,tldr-app,tldr-app:ci-build,31
