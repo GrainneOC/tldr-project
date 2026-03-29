@@ -112,6 +112,11 @@ jobs:
           pattern: scan-results-*
           path: reports
 
+      - name: Show downloaded files
+        run: |
+          pwd
+          find reports -maxdepth 4 -type f | sort
+
       - name: Normalise Trivy report
         run: python scripts/normalize_trivy.py
 
