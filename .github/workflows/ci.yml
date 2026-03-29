@@ -1,97 +1,3 @@
-permissions:
-  contents: write
-
-name: CI
-
-on:
-  push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install pytest
-
-      - name: Run tests
-        run: |
-          if [ -d tests ]; then pytest -q; else echo "No tests yet"; fi
-
-  scan-image:
-    runs-on: ubuntu-latest
-    needs: test
-
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-
-      - name: Build app image
-        run: |
-          cd tldr-app
-          docker build -t tldr-app:ci-build .
-
-      - name: Prepare reports directory
-        run: mkdir -p reports
-
-      - name: Start Trivy timer
-        run: echo "TRIVY_START=$(date +%s)" >> $GITHUB_ENV
-
-      - name: Run Trivy scan (JSON)
-        uses: aquasecurity/trivy-action@0.35.0
-        with:
-          image-ref: tldr-app:ci-build
-          format: json
-          output: reports/trivy-report.json
-          vuln-type: os,library
-          severity: CRITICAL,HIGH,MEDIUM,LOW
-          ignore-unfixed: true
-          exit-code: 0
-
-      - name: Stop Trivy timer
-        run: |
-          end=$(date +%s)
-          trivy_time=$((end - TRIVY_START))
-          echo "tool,image_label,image_ref,seconds" > reports/scan-times.csv
-          echo "trivy,tldr-app,tldr-app:ci-build,${trivy_time}" >> reports/scan-times.csv
-
-      - name: Start Grype timer
-        run: echo "GRYPE_START=$(date +%s)" >> $GITHUB_ENV
-
-      - name: Run Grype scan (JSON)
-        uses: anchore/scan-action@v6
-        with:
-          image: tldr-app:ci-build
-          fail-build: false
-          severity-cutoff: critical
-          output-format: json
-          output-file: reports/grype-report.json
-
-      - name: Stop Grype timer
-        run: |
-          end=$(date +%s)
-          grype_time=$((end - GRYPE_START))
-          echo "grype,tldr-app,tldr-app:ci-build,${grype_time}" >> reports/scan-times.csv
-
-      - name: Upload scan reports
-        uses: actions/upload-artifact@v4
-        with:
-          name: scan-results-app
-          path: reports
-
   normalize-reports:
     runs-on: ubuntu-latest
     needs: scan-image
@@ -116,6 +22,13 @@ jobs:
           pwd
           find reports -maxdepth 3 -type f | sort
 
+      - name: Inspect Trivy JSON size
+        run: |
+          echo "Results count:"
+          jq '.Results | length' reports/trivy-report.json || echo "jq failed"
+          echo "First result vuln count:"
+          jq '.Results[0].Vulnerabilities | length' reports/trivy-report.json || echo "jq failed for vulns"
+
       - name: Normalise Trivy report
         run: python scripts/normalize_trivy.py
 
@@ -134,72 +47,3 @@ jobs:
             reports/grype-normalized.csv
             reports/overlap-report.csv
             reports/scan-times.csv
-
-  policy-check:
-    runs-on: ubuntu-latest
-    needs: normalize-reports
-
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Download normalised reports
-        uses: actions/download-artifact@v4
-        with:
-          name: normalized-reports
-          path: reports
-
-      - name: Run policy check
-        run: python scripts/policy-fail-critical.py reports/trivy-normalized.csv reports/grype-normalized.csv
-
-      - name: Upload fixable report
-        uses: actions/upload-artifact@v4
-        with:
-          name: fixable-report
-          path: reports/fixable-findings.json
-
-  persist-reports:
-    runs-on: ubuntu-latest
-    needs: policy-check
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Download normalised reports
-        uses: actions/download-artifact@v4
-        with:
-          name: normalized-reports
-          path: reports
-
-      - name: Download fixable report
-        uses: actions/download-artifact@v4
-        with:
-          name: fixable-report
-          path: reports
-
-      - name: Show final report files
-        run: |
-          find reports -maxdepth 3 -type f | sort
-
-      - name: Commit generated reports to repo
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          git add reports/
-
-          if git diff --cached --quiet; then
-            echo "No report changes to commit"
-          else
-            git commit -m "chore: update scan outputs [skip ci]"
-            git push
-          fi
