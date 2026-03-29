@@ -40,25 +40,33 @@ def load_grype(path, artifact_name):
             "package_name": art.get("name", ""),
             "installed_version": art.get("version", ""),
             "fix_state": fix_state,
-            "fixed_version": ";".join([v for v in fixed_versions if v]),
+            "fixed_version": ";".join(v for v in fixed_versions if v),
         })
 
     return rows
 
+def write_csv(path, rows):
+    with path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=FIELDNAMES)
+        writer.writeheader()
+        writer.writerows(rows)
+
 def main():
-    for path in REPORTS_ROOT.rglob("grype-report.json"):
-        artifact_name = path.parent.name
-        out_path = REPORTS_ROOT / f"grype-normalized-{artifact_name}.csv"
+    all_rows = []
+    report_paths = sorted(REPORTS_ROOT.rglob("grype-report.json"))
+
+    for path in report_paths:
+        artifact_name = path.parent.name if path.parent != REPORTS_ROOT else "app"
         rows = load_grype(path, artifact_name)
+        all_rows.extend(rows)
 
-        with out_path.open("w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=FIELDNAMES)
-            writer.writeheader()
-            writer.writerows(rows)
-
+        out_path = REPORTS_ROOT / f"grype-normalized-{artifact_name}.csv"
+        write_csv(out_path, rows)
         print(f"Wrote {len(rows)} rows to {out_path}")
+
+    stable_out = REPORTS_ROOT / "grype-normalized.csv"
+    write_csv(stable_out, all_rows)
+    print(f"Wrote {len(all_rows)} total rows to {stable_out}")
 
 if __name__ == "__main__":
     main()
-
-
