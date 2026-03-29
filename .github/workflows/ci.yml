@@ -139,3 +139,76 @@ jobs:
           path: |
             reports/trivy-normalized.csv
             reports/grype-normalized.csv
+
+  policy-check:
+    runs-on: ubuntu-latest
+    needs: normalize-reports
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Prepare reports directory
+        run: mkdir -p reports
+
+      - name: Download normalised reports
+        uses: actions/download-artifact@v4
+        with:
+          name: normalized-reports
+          path: reports
+
+      - name: Run policy check
+        run: python scripts/policy-fail-critical.py reports/trivy-normalized.csv reports/grype-normalized.csv
+
+      - name: Upload fixable report
+        uses: actions/upload-artifact@v4
+        with:
+          name: fixable-report
+          path: reports/fixable-findings.json
+
+  publish-image:
+    runs-on: ubuntu-latest
+    needs: policy-check
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_NAME: grainneoc/tldr-app
+      IMAGE_ID: ghcr.io/grainneoc/tldr-app:${{ github.sha }}
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Build Docker image
+        run: |
+          cd tldr-app
+          docker build -t $IMAGE_ID .
+
+      - name: Push image to GHCR
+        run: docker push $IMAGE_ID
+
+      - name: Update Helm values image tag
+        uses: fjogeleit/yaml-update-action@v0.16.0
+        with:
+          valueFile: tldr-app-chart/values.yaml
+          propertyPath: image.tag
+          value: ${{ github.sha }}
+          commitChange: true
+          message: "Update image tag to ${{ github.sha }}"
+
+      - name: Commit and push updated values
+        run: echo "Committed by yaml-update-action"    
