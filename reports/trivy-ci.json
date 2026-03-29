@@ -1,0 +1,341 @@
+{
+  "SchemaVersion": 2,
+  "CreatedAt": "2026-03-29T16:37:52.777815419+01:00",
+  "ArtifactName": "tldr-app:ci-build",
+  "ArtifactType": "container_image",
+  "Metadata": {
+    "Size": 171791872,
+    "OS": {
+      "Family": "debian",
+      "Name": "13.4"
+    },
+    "ImageID": "sha256:9bda805ddb0df6ec256b543f76101f3efdfb1b3966a8148f911f5d033e07a310",
+    "DiffIDs": [
+      "sha256:188c9b34dfbe022075d01fc4f5a305412909ef97de440783c15043e68e1b1913",
+      "sha256:7c3d855adb27d35152846843945ba4762b4f29c81803982b791f04a4ccbdba0d",
+      "sha256:00111f9d6e574635f3d8936186a797c237a5e117c6a70e7968bee027239da25f",
+      "sha256:21f42d92f0f2265871e6f3f359987b097000d3a812d93ad56fc6218864c570b8",
+      "sha256:0a19acf947bbdb6e932fab0525589d7a1ade129d83739923e14dc085f8c79bcb",
+      "sha256:f52c186ba3feae9522522f58ba08c9b8e580f4e942340bff0bb579fe2bbeef4e",
+      "sha256:40753fa6c8f9ec8bc3040ea325459029fe03afb7725236bef62a6a0701303b7b",
+      "sha256:99be1bc4d2aef92332cb33ad80e93679b891a0398345fe22859a59f565269927"
+    ],
+    "RepoTags": [
+      "tldr-app:ci-build",
+      "ghcr.io/grainneoc/tldr-app:latest"
+    ],
+    "RepoDigests": [
+      "ghcr.io/grainneoc/tldr-app@sha256:b465f0d353bf5dfe0dc30c9a597b1b7e2375840f20ff7c5e9f9013c08fe6dee0"
+    ],
+    "ImageConfig": {
+      "architecture": "amd64",
+      "created": "2026-03-18T13:59:31.164391055Z",
+      "history": [
+        {
+          "created": "2026-03-16T00:00:00Z",
+          "created_by": "# debian.sh --arch 'amd64' out/ 'trixie' '@1773619200'",
+          "comment": "debuerreotype 0.17"
+        },
+        {
+          "created": "2026-03-16T22:57:50Z",
+          "created_by": "ENV PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-03-16T22:57:50Z",
+          "created_by": "RUN /bin/sh -c set -eux; \tapt-get update; \tapt-get install -y --no-install-recommends \t\tca-certificates \t\tnetbase \t\ttzdata \t; \tapt-get dist-clean # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2026-03-16T22:57:50Z",
+          "created_by": "ENV GPG_KEY=7169605F62C751356D054A26A821E680E5FA6305",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-03-16T22:57:50Z",
+          "created_by": "ENV PYTHON_VERSION=3.13.12",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-03-16T22:57:50Z",
+          "created_by": "ENV PYTHON_SHA256=2a84cd31dd8d8ea8aaff75de66fc1b4b0127dd5799aa50a64ae9a313885b4593",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-03-16T23:07:42Z",
+          "created_by": "RUN /bin/sh -c set -eux; \t\tsavedAptMark=\"$(apt-mark showmanual)\"; \tapt-get update; \tapt-get install -y --no-install-recommends \t\tdpkg-dev \t\tgcc \t\tgnupg \t\tlibbluetooth-dev \t\tlibbz2-dev \t\tlibc6-dev \t\tlibdb-dev \t\tlibffi-dev \t\tlibgdbm-dev \t\tliblzma-dev \t\tlibncursesw5-dev \t\tlibreadline-dev \t\tlibsqlite3-dev \t\tlibssl-dev \t\tmake \t\ttk-dev \t\tuuid-dev \t\twget \t\txz-utils \t\tzlib1g-dev \t; \t\twget -O python.tar.xz \"https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz\"; \techo \"$PYTHON_SHA256 *python.tar.xz\" | sha256sum -c -; \twget -O python.tar.xz.asc \"https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz.asc\"; \tGNUPGHOME=\"$(mktemp -d)\"; export GNUPGHOME; \tgpg --batch --keyserver hkps://keys.openpgp.org --recv-keys \"$GPG_KEY\"; \tgpg --batch --verify python.tar.xz.asc python.tar.xz; \tgpgconf --kill all; \trm -rf \"$GNUPGHOME\" python.tar.xz.asc; \tmkdir -p /usr/src/python; \ttar --extract --directory /usr/src/python --strip-components=1 --file python.tar.xz; \trm python.tar.xz; \t\tcd /usr/src/python; \tgnuArch=\"$(dpkg-architecture --query DEB_BUILD_GNU_TYPE)\"; \t./configure \t\t--build=\"$gnuArch\" \t\t--enable-loadable-sqlite-extensions \t\t--enable-optimizations \t\t--enable-option-checking=fatal \t\t--enable-shared \t\t$(test \"${gnuArch%%-*}\" != 'riscv64' \u0026\u0026 echo '--with-lto') \t\t--with-ensurepip \t; \tnproc=\"$(nproc)\"; \tEXTRA_CFLAGS=\"$(dpkg-buildflags --get CFLAGS)\"; \tLDFLAGS=\"$(dpkg-buildflags --get LDFLAGS)\"; \tLDFLAGS=\"${LDFLAGS:-} -Wl,--strip-all\"; \tarch=\"$(dpkg --print-architecture)\"; arch=\"${arch##*-}\"; \tcase \"$arch\" in \t\tamd64|arm64) \t\t\tEXTRA_CFLAGS=\"${EXTRA_CFLAGS:-} -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer\"; \t\t\t;; \t\ti386) \t\t\t;; \t\t*) \t\t\tEXTRA_CFLAGS=\"${EXTRA_CFLAGS:-} -fno-omit-frame-pointer\"; \t\t\t;; \tesac; \tmake -j \"$nproc\" \t\t\"EXTRA_CFLAGS=${EXTRA_CFLAGS:-}\" \t\t\"LDFLAGS=${LDFLAGS:-}\" \t; \trm python; \tmake -j \"$nproc\" \t\t\"EXTRA_CFLAGS=${EXTRA_CFLAGS:-}\" \t\t\"LDFLAGS=${LDFLAGS:-} -Wl,-rpath='\\$\\$ORIGIN/../lib'\" \t\tpython \t; \tmake install; \t\tcd /; \trm -rf /usr/src/python; \t\tfind /usr/local -depth \t\t\\( \t\t\t\\( -type d -a \\( -name test -o -name tests -o -name idle_test \\) \\) \t\t\t-o \\( -type f -a \\( -name '*.pyc' -o -name '*.pyo' -o -name 'libpython*.a' \\) \\) \t\t\\) -exec rm -rf '{}' + \t; \t\tldconfig; \t\tapt-mark auto '.*' \u003e /dev/null; \tapt-mark manual $savedAptMark; \tfind /usr/local -type f -executable -not \\( -name '*tkinter*' \\) -exec ldd '{}' ';' \t\t| awk '/=\u003e/ { so = $(NF-1); if (index(so, \"/usr/local/\") == 1) { next }; gsub(\"^/(usr/)?\", \"\", so); printf \"*%s\\n\", so }' \t\t| sort -u \t\t| xargs -rt dpkg-query --search \t\t| awk 'sub(\":$\", \"\", $1) { print $1 }' \t\t| sort -u \t\t| xargs -r apt-mark manual \t; \tapt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \tapt-get dist-clean; \t\texport PYTHONDONTWRITEBYTECODE=1; \tpython3 --version; \tpip3 --version # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2026-03-16T23:07:42Z",
+          "created_by": "RUN /bin/sh -c set -eux; \tfor src in idle3 pip3 pydoc3 python3 python3-config; do \t\tdst=\"$(echo \"$src\" | tr -d 3)\"; \t\t[ -s \"/usr/local/bin/$src\" ]; \t\t[ ! -e \"/usr/local/bin/$dst\" ]; \t\tln -svT \"$src\" \"/usr/local/bin/$dst\"; \tdone # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2026-03-16T23:07:42Z",
+          "created_by": "CMD [\"python3\"]",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-03-18T13:59:04Z",
+          "created_by": "WORKDIR /app",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2026-03-18T13:59:04Z",
+          "created_by": "COPY requirements.txt . # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2026-03-18T13:59:31Z",
+          "created_by": "RUN /bin/sh -c pip install --no-cache-dir -r requirements.txt # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2026-03-18T13:59:31Z",
+          "created_by": "COPY main.py llm_client.py ./ # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2026-03-18T13:59:31Z",
+          "created_by": "EXPOSE [8000/tcp]",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-03-18T13:59:31Z",
+          "created_by": "CMD [\"uvicorn\" \"main:app\" \"--host\" \"0.0.0.0\" \"--port\" \"8000\"]",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        }
+      ],
+      "os": "linux",
+      "rootfs": {
+        "type": "layers",
+        "diff_ids": [
+          "sha256:188c9b34dfbe022075d01fc4f5a305412909ef97de440783c15043e68e1b1913",
+          "sha256:7c3d855adb27d35152846843945ba4762b4f29c81803982b791f04a4ccbdba0d",
+          "sha256:00111f9d6e574635f3d8936186a797c237a5e117c6a70e7968bee027239da25f",
+          "sha256:21f42d92f0f2265871e6f3f359987b097000d3a812d93ad56fc6218864c570b8",
+          "sha256:0a19acf947bbdb6e932fab0525589d7a1ade129d83739923e14dc085f8c79bcb",
+          "sha256:f52c186ba3feae9522522f58ba08c9b8e580f4e942340bff0bb579fe2bbeef4e",
+          "sha256:40753fa6c8f9ec8bc3040ea325459029fe03afb7725236bef62a6a0701303b7b",
+          "sha256:99be1bc4d2aef92332cb33ad80e93679b891a0398345fe22859a59f565269927"
+        ]
+      },
+      "config": {
+        "Cmd": [
+          "uvicorn",
+          "main:app",
+          "--host",
+          "0.0.0.0",
+          "--port",
+          "8000"
+        ],
+        "Env": [
+          "PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+          "GPG_KEY=7169605F62C751356D054A26A821E680E5FA6305",
+          "PYTHON_VERSION=3.13.12",
+          "PYTHON_SHA256=2a84cd31dd8d8ea8aaff75de66fc1b4b0127dd5799aa50a64ae9a313885b4593"
+        ],
+        "WorkingDir": "/app",
+        "ExposedPorts": {
+          "8000/tcp": {}
+        },
+        "ArgsEscaped": true
+      }
+    },
+    "Layers": [
+      {
+        "Size": 81039360,
+        "DiffID": "sha256:188c9b34dfbe022075d01fc4f5a305412909ef97de440783c15043e68e1b1913"
+      },
+      {
+        "Size": 4123136,
+        "DiffID": "sha256:7c3d855adb27d35152846843945ba4762b4f29c81803982b791f04a4ccbdba0d"
+      },
+      {
+        "Size": 36541440,
+        "DiffID": "sha256:00111f9d6e574635f3d8936186a797c237a5e117c6a70e7968bee027239da25f"
+      },
+      {
+        "Size": 5120,
+        "DiffID": "sha256:21f42d92f0f2265871e6f3f359987b097000d3a812d93ad56fc6218864c570b8"
+      },
+      {
+        "Size": 1536,
+        "DiffID": "sha256:0a19acf947bbdb6e932fab0525589d7a1ade129d83739923e14dc085f8c79bcb"
+      },
+      {
+        "Size": 2560,
+        "DiffID": "sha256:f52c186ba3feae9522522f58ba08c9b8e580f4e942340bff0bb579fe2bbeef4e"
+      },
+      {
+        "Size": 50074624,
+        "DiffID": "sha256:40753fa6c8f9ec8bc3040ea325459029fe03afb7725236bef62a6a0701303b7b"
+      },
+      {
+        "Size": 4096,
+        "DiffID": "sha256:99be1bc4d2aef92332cb33ad80e93679b891a0398345fe22859a59f565269927"
+      }
+    ]
+  },
+  "Results": [
+    {
+      "Target": "tldr-app:ci-build (debian 13.4)",
+      "Class": "os-pkgs",
+      "Type": "debian"
+    },
+    {
+      "Target": "Python",
+      "Class": "lang-pkgs",
+      "Type": "python-pkg",
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "CVE-2026-1703",
+          "PkgName": "pip",
+          "PkgPath": "usr/local/lib/python3.13/site-packages/pip-25.3.dist-info/METADATA",
+          "PkgIdentifier": {
+            "PURL": "pkg:pypi/pip@25.3",
+            "UID": "c5204ce9505d102c"
+          },
+          "InstalledVersion": "25.3",
+          "FixedVersion": "26.0",
+          "Status": "fixed",
+          "Layer": {
+            "DiffID": "sha256:00111f9d6e574635f3d8936186a797c237a5e117c6a70e7968bee027239da25f"
+          },
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-1703",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory pip",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Apip"
+          },
+          "Title": "pip: pip: Information disclosure via path traversal when installing crafted wheel archives",
+          "Description": "When pip is installing and extracting a maliciously crafted wheel archive, files may be extracted outside the installation directory. The path traversal is limited to prefixes of the installation directory, thus isn't able to inject or overwrite executable files in typical situations.",
+          "Severity": "LOW",
+          "CweIDs": [
+            "CWE-22"
+          ],
+          "VendorSeverity": {
+            "azure": 1,
+            "bitnami": 1,
+            "ghsa": 1,
+            "redhat": 1
+          },
+          "CVSS": {
+            "bitnami": {
+              "V40Vector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:L/UI:A/VC:N/VI:L/VA:N/SC:N/SI:N/SA:N",
+              "V40Score": 2
+            },
+            "ghsa": {
+              "V40Vector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:L/UI:A/VC:N/VI:L/VA:N/SC:N/SI:N/SA:N",
+              "V40Score": 2
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:R/S:U/C:L/I:L/A:N",
+              "V3Score": 3.9
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2026-1703",
+            "https://github.com/pypa/pip",
+            "https://github.com/pypa/pip/commit/8e227a9be4faa9594e05d02ca05a413a2a4e7735",
+            "https://github.com/pypa/pip/pull/13777",
+            "https://mail.python.org/archives/list/security-announce@python.org/thread/WIEA34D4TABF2UNQJAOMXKCICSPBE2DJ",
+            "https://mail.python.org/archives/list/security-announce@python.org/thread/WIEA34D4TABF2UNQJAOMXKCICSPBE2DJ/",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-1703",
+            "https://www.cve.org/CVERecord?id=CVE-2026-1703"
+          ],
+          "PublishedDate": "2026-02-02T15:16:30.51Z",
+          "LastModifiedDate": "2026-02-03T16:44:36.63Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2024-47081",
+          "PkgName": "requests",
+          "PkgPath": "usr/local/lib/python3.13/site-packages/requests-2.32.3.dist-info/METADATA",
+          "PkgIdentifier": {
+            "PURL": "pkg:pypi/requests@2.32.3",
+            "UID": "5adcc2bd0a53a534"
+          },
+          "InstalledVersion": "2.32.3",
+          "FixedVersion": "2.32.4",
+          "Status": "fixed",
+          "Layer": {
+            "DiffID": "sha256:40753fa6c8f9ec8bc3040ea325459029fe03afb7725236bef62a6a0701303b7b"
+          },
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2024-47081",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory pip",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Apip"
+          },
+          "Title": "requests: Requests vulnerable to .netrc credentials leak via malicious URLs",
+          "Description": "Requests is a HTTP library. Due to a URL parsing issue, Requests releases prior to 2.32.4 may leak .netrc credentials to third parties for specific maliciously-crafted URLs. Users should upgrade to version 2.32.4 to receive a fix. For older versions of Requests, use of the .netrc file can be disabled with `trust_env=False` on one's Requests Session.",
+          "Severity": "MEDIUM",
+          "CweIDs": [
+            "CWE-522"
+          ],
+          "VendorSeverity": {
+            "alma": 2,
+            "amazon": 2,
+            "azure": 2,
+            "cbl-mariner": 2,
+            "ghsa": 2,
+            "oracle-oval": 2,
+            "photon": 2,
+            "redhat": 2,
+            "rocky": 2,
+            "ubuntu": 2
+          },
+          "CVSS": {
+            "ghsa": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:H/I:N/A:N",
+              "V3Score": 5.3
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:H/I:N/A:N",
+              "V3Score": 5.3
+            }
+          },
+          "References": [
+            "http://seclists.org/fulldisclosure/2025/Jun/2",
+            "http://www.openwall.com/lists/oss-security/2025/06/03/11",
+            "http://www.openwall.com/lists/oss-security/2025/06/03/9",
+            "http://www.openwall.com/lists/oss-security/2025/06/04/1",
+            "http://www.openwall.com/lists/oss-security/2025/06/04/6",
+            "https://access.redhat.com/errata/RHSA-2025:12519",
+            "https://access.redhat.com/security/cve/CVE-2024-47081",
+            "https://bugzilla.redhat.com/2371272",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2371272",
+            "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-47081",
+            "https://errata.almalinux.org/9/ALSA-2025-12519.html",
+            "https://errata.rockylinux.org/RLSA-2025:12519",
+            "https://github.com/psf/requests",
+            "https://github.com/psf/requests/commit/96ba401c1296ab1dda74a2365ef36d88f7d144ef",
+            "https://github.com/psf/requests/pull/6965",
+            "https://github.com/psf/requests/security/advisories/GHSA-9hjg-9r4m-mvj7",
+            "https://linux.oracle.com/cve/CVE-2024-47081.html",
+            "https://linux.oracle.com/errata/ELSA-2025-14999.html",
+            "https://nvd.nist.gov/vuln/detail/CVE-2024-47081",
+            "https://requests.readthedocs.io/en/latest/api/#requests.Session.trust_env",
+            "https://seclists.org/fulldisclosure/2025/Jun/2",
+            "https://ubuntu.com/security/notices/USN-7568-1",
+            "https://ubuntu.com/security/notices/USN-7762-1",
+            "https://www.cve.org/CVERecord?id=CVE-2024-47081",
+            "https://www.openwall.com/lists/oss-security/2025/06/03/9"
+          ],
+          "PublishedDate": "2025-06-09T18:15:24.983Z",
+          "LastModifiedDate": "2025-06-12T16:06:47.857Z"
+        }
+      ]
+    }
+  ]
+}
