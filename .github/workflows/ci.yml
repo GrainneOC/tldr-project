@@ -69,7 +69,7 @@ jobs:
         with:
           image-ref: ${{ matrix.image }}
           format: json
-          output: reports/trivy-report.json
+          output: reports/${{ matrix.label }}/trivy-report.json
           vuln-type: os,library
           severity: CRITICAL,HIGH,MEDIUM,LOW
           ignore-unfixed: true
@@ -82,15 +82,13 @@ jobs:
           fail-build: false
           severity-cutoff: critical
           output-format: json
-          output-file: reports/grype-report.json
+          output-file: reports/${{ matrix.label }}/grype-report.json
 
       - name: Upload scan reports
         uses: actions/upload-artifact@v4
         with:
           name: scan-results-${{ matrix.kind }}-${{ matrix.label }}
-          path: |
-            reports/trivy-report.json
-            reports/grype-report.json
+          path: reports/${{ matrix.label }}
 
   normalize-reports:
     runs-on: ubuntu-latest
