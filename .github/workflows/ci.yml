@@ -130,7 +130,7 @@ jobs:
         run: python scripts/normalize_grype.py
 
       - name: Compare overlap
-        run: python scripts/compare_overlap_simple.py
+        run: python scripts/compare.py
 
       - name: Upload normalised CSVs
         uses: actions/upload-artifact@v4
