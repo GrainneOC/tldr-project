@@ -39,7 +39,7 @@ def load_grype(path):
 def main():
     all_rows = []
 
-    for path in REPORTS_ROOT.glob("scan-results-*/grype-report.json"):
+    for path in REPORTS_ROOT.rglob("grype-report.json"):
         all_rows.extend(load_grype(path))
 
     fieldnames = [
