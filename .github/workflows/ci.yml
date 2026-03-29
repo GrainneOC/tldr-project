@@ -129,6 +129,12 @@ jobs:
       - name: Normalise Grype report
         run: python scripts/normalize_grype.py
 
+      - name: Save app Trivy normalized CSV with app label
+        run: cp reports/trivy-normalized.csv reports/trivy-normalized-tldr-app.csv
+
+      - name: Save app Grype normalized CSV with app label
+        run: cp reports/grype-normalized.csv reports/grype-normalized-tldr-app.csv
+
       - name: Compare overlap
         run: python scripts/compare.py
 
@@ -139,6 +145,9 @@ jobs:
           path: |
             reports/trivy-normalized.csv
             reports/grype-normalized.csv
+            reports/trivy-normalized-tldr-app.csv
+            reports/grype-normalized-tldr-app.csv
+            
 
   policy-check:
     runs-on: ubuntu-latest
