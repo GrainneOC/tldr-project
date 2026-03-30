@@ -1,20 +1,34 @@
-from fastapi import FastAPI
+from pathlib import Path
+import json
+
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from llm_client import generate as ollama_generate
 
-app = FastAPI()
+app = FastAPI(title="Terms Long; Didn't Read - TL;DR")
+
+BASE_DIR = Path(__file__).resolve().parent
+STATIC_DIR = BASE_DIR / "static"
+
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 class GenerateRequest(BaseModel):
     prompt: str
 
 
 class GenerateResponse(BaseModel):
-    text: str
+    obligations: list[str]
+    required_data: list[str]
+    deadlines: list[str]
+    applies_to: list[str]
+    unclear_points: list[str]
 
 @app.get("/")
 async def root():
-    return {"message": "Terms Long; Didn't Read"}
+    return FileResponse(STATIC_DIR / "index.html")
 
 @app.get("/health")
 async def health():
@@ -22,10 +36,50 @@ async def health():
 
 @app.post("/generate", response_model=GenerateResponse)
 async def generate(req: GenerateRequest):
-    full_prompt = (
-    "Summarise the following text into the 3–5 main points, "
-    "focusing on obligations and data required:\n\n"
-    f"{req.prompt}"
-    )
+    full_prompt = f"""
+You are a compliance and policy summarisation assistant.
+
+Read the text and return ONLY valid JSON with this exact structure:
+
+{{
+  "obligations": ["..."],
+  "required_data": ["..."],
+  "deadlines": ["..."],
+  "applies_to": ["..."],
+  "unclear_points": ["..."]
+}}
+
+Rules:
+- obligations: list the key duties, obligations, or required actions.
+- required_data: list documents, data, evidence, or information required.
+- deadlines: list timing requirements, due dates, renewal periods, or frequency obligations.
+- applies_to: list who the rule, policy, or obligation appears to apply to.
+- unclear_points: list anything ambiguous, missing, or not clearly specified.
+- Use short, practical bullet-style strings.
+- If a section has nothing clear, return an empty list.
+- Do not include markdown.
+- Do not include any text before or after the JSON.
+
+Text:
+{req.prompt}
+""".strip()
+    
     llm_output = ollama_generate(full_prompt)
-    return GenerateResponse(text=llm_output)
+    print("RAW MODEL OUTPUT:", llm_output)
+    
+    try:
+        data = json.loads(llm_output)
+    except json.JSONDecodeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Model did not return valid JSON."
+        )
+
+    for key in ["obligations", "required_data", "deadlines", "applies_to", "unclear_points"]:
+        if key not in data or not isinstance(data[key], list):
+            raise HTTPException(
+                status_code=500,
+                detail=f"Model response missing or invalid field: {key}"
+            )
+
+    return data
