@@ -62,7 +62,7 @@ jobs:
           output: 'reports/trivy-report.json'
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH,MEDIUM,LOW'
-          ignore-unfixed: true
+          ignore-unfixed: false
           exit-code: '0'   # for comparison runs; later switch to 1
 
       - name: Upload Trivy report
