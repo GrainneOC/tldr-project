@@ -10,7 +10,7 @@ def generate(prompt: str) -> str:
         "prompt": prompt,
         "stream": False,
     }
-    resp = requests.post(OLLAMA_URL, json=payload, timeout=120)
+    resp = requests.post(OLLAMA_URL, json=payload, timeout=300)
     resp.raise_for_status()
     data = resp.json()
     return data.get("response", "").strip()
