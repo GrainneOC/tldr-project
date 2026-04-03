@@ -35,7 +35,7 @@ def main():
     print(f"Fixable Critical/High findings: {len(fixable_critical)}")
 
     REPORTS_ROOT.mkdir(parents=True, exist_ok=True)
-    out_json = REPORTS_ROOT / "fixable-findings.csv"
+    out_csv = REPORTS_ROOT / "fixable-findings.csv"
     
     if fixable:
         fieldnames = list(fixable[0].keys())
