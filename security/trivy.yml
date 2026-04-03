@@ -11,4 +11,5 @@ vulnerability:
     - os
     - library
   ignore-unfixed: false
-
+format: json
+output: reports/trivy-report.json
