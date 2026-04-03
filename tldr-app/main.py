@@ -68,16 +68,24 @@ Text:
     llm_output = ollama_generate(full_prompt)
     print("RAW MODEL OUTPUT:", llm_output)
     
-try:
-    match = re.search(r'\{.*\}', llm_output, re.DOTALL)
-    if not match:
+    try:
+        match = re.search(r'\{.*\}', llm_output, re.DOTALL)
+        if not match:
+            raise HTTPException(
+                status_code=500,
+                detail="Model did not return valid JSON."
+            )
+     data = json.loads(match.group())
+    except json.JSONDecodeError:
         raise HTTPException(
             status_code=500,
             detail="Model did not return valid JSON."
         )
-    data = json.loads(match.group())
-except json.JSONDecodeError:
-    raise HTTPException(
-        status_code=500,
-        detail="Model did not return valid JSON."
-    )
+
+    for key in ["obligations", "required_data", "deadlines", "applies_to", "unclear_points"]:
+        if key not in data or not isinstance(data[key], list):
+            raise HTTPException(
+                status_code=500,
+                detail=f"Model response missing or invalid field: {key}"
+            )
+    return data
