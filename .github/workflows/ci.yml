@@ -178,7 +178,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: fixable-report
-          path: reports/fixable-findings.json
+          path: reports/fixable-findings.csv
 
   publish-image:
     runs-on: ubuntu-latest
