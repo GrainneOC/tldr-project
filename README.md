@@ -69,6 +69,8 @@ ArgoCD continuously reconciles the live cluster state with the desired state in 
 
 This folder contains the application code. The app is called **Terms Long; Didn't Read** - a FastAPI web service that wraps the Llama3 LLM via Ollama to summarise long policy or compliance documents in plain English. It is built on `python:3.13-slim` to keep the container image lightweight, exposes a web UI on port 8000, and is the primary image target for the vulnerability scanning pipeline. The Dockerfile follows container security best practices by using a minimal base image and installing only the dependencies required to run the service.
 
+**Deployment note:** The application connects to Ollama via host.docker.internal, which resolves to the host machine on Docker Desktop. This means the LLM feature works locally but Ollama is not deployed inside the Kubernetes cluster. A full in-cluster deployment would require an Ollama Deployment and Service added to the Helm chart, an init container to pull the Llama3 model, an Ingress controller to expose the app externally, and sufficient GPU resources for the model to run at a practical speed. Due to hardware constraints and project scope, this was a conscious decision. The project demonstrates the full CI/CD and GitOps pipeline with the application running correctly in the local environment, and a full cluster deployment is identified as future work.
+
 ```
 tldr-app/
 ├── main.py           # FastAPI application and API endpoints
