@@ -41,6 +41,7 @@ def main():
 
     print(f"Wrote fixable findings to {out_json}")
 
+    #comment out this conditional block when you want CI/CD to continue and not fail on high/critical vulnerabilities
     if critical_or_high:
       print("FAIL: at least one Critical or High vulnerability was found")
       sys.exit(1)
