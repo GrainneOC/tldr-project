@@ -1,6 +1,6 @@
 # TL;DR - Terms Long; Didn't Read
 
-> **Final Year Project — Higher Diploma in Computer Science, SETU Waterford**
+> **Final Year Project - Higher Diploma in Computer Science, SETU Waterford**
 >
 > A comparison of container image vulnerability scanners (Trivy vs Grype) in a CI/CD pipeline, deploying an AI-powered risk assistant for online agreements.
 
