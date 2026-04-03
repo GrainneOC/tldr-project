@@ -25,14 +25,14 @@ def main():
 
     rows = read_rows(trivy_csv) + read_rows(grype_csv)
 
-    critical = [r for r in rows if (r.get("severity") or "").strip().lower() == "critical"]
+    critical_or_high = [r for r in rows if (r.get("severity") or "").strip().lower() in {"critical", "high"}]
     fixable = [r for r in rows if is_fixable(r)]
-    fixable_critical = [r for r in critical if is_fixable(r)]
+    fixable_critical = [r for r in critical_or_high if is_fixable(r)]
 
     print(f"Total findings: {len(rows)}")
-    print(f"Critical findings: {len(critical)}")
+    print(f"Critical or High findings: {len(critical_or_high)}")
     print(f"Fixable findings: {len(fixable)}")
-    print(f"Fixable Critical findings: {len(fixable_critical)}")
+    print(f"Fixable Critical/High findings: {len(fixable_critical)}")
 
     REPORTS_ROOT.mkdir(parents=True, exist_ok=True)
     out_json = REPORTS_ROOT / "fixable-findings.json"
@@ -41,12 +41,12 @@ def main():
 
     print(f"Wrote fixable findings to {out_json}")
 
-    if critical:
-        print("FAIL: at least one Critical vulnerability was found")
-        sys.exit(1)
+    if critical_or_high:
+      print("FAIL: at least one Critical or High vulnerability was found")
+      sys.exit(1)
 
     print("PASS: policy satisfied")
     sys.exit(0)
 
 if __name__ == "__main__":
-    main()
+  main()
