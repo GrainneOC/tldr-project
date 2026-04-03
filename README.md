@@ -1,4 +1,4 @@
-# TL;DR — Terms Long; Didn't Read
+# TL;DR - Terms Long; Didn't Read
 
 > **Final Year Project — Higher Diploma in Computer Science, SETU Waterford**
 >
