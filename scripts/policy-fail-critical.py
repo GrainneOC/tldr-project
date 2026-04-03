@@ -35,11 +35,18 @@ def main():
     print(f"Fixable Critical/High findings: {len(fixable_critical)}")
 
     REPORTS_ROOT.mkdir(parents=True, exist_ok=True)
-    out_json = REPORTS_ROOT / "fixable-findings.json"
-    with out_json.open("w", encoding="utf-8") as f:
-        json.dump(fixable, f, indent=2)
-
-    print(f"Wrote fixable findings to {out_json}")
+    out_json = REPORTS_ROOT / "fixable-findings.csv"
+    
+    if fixable:
+        fieldnames = list(fixable[0].keys())
+        with out_csv.open("w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(fixable)
+    else:
+        out_csv.write_text("no fixable findings\n", encoding="utf-8")
+    
+    print(f"Wrote fixable findings to {out_csv}")
 
     #comment out this conditional block when you want CI/CD to continue and not fail on high/critical vulnerabilities
     if critical_or_high:
