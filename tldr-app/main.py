@@ -73,7 +73,7 @@ Text:
         raise HTTPException(
             status_code=500,
             detail="Model did not return valid JSON."
-
+    )
     for key in ["obligations", "required_data", "deadlines", "applies_to", "unclear_points"]:
         if key not in data or not isinstance(data[key], list):
             raise HTTPException(
