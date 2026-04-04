@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TL;DR App</title>
+  <style>
+    :root {
+      --bg: #f7f6f2;
+      --surface: #ffffff;
+      --surface-2: #f1efe9;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #0f766e;
+      --primary-hover: #115e59;
+      --border: #d6d3d1;
+      --danger: #b91c1c;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, sans-serif;
+      background: linear-gradient(180deg, #f7f6f2 0%, #ece8df 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 20px 48px;
+    }
+
+    .hero {
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(2rem, 4vw, 3rem);
+      line-height: 1.05;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 65ch;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(6px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 240px;
+      resize: vertical;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      font: inherit;
+      line-height: 1.5;
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    textarea:focus {
+      outline: 2px solid rgba(15, 118, 110, 0.25);
+      border-color: var(--primary);
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      background: var(--primary);
+      color: white;
+      font: inherit;
+      font-weight: 600;
+      padding: 12px 18px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: var(--primary-hover);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .error {
+      color: var(--danger);
+      margin-top: 12px;
+      font-weight: 600;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .panel {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      min-height: 180px;
+    }
+
+    .panel h3 {
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+    }
+
+    .panel ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .panel li {
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+
+    .empty {
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    @media (max-width: 800px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <h1>Terms Long; Didn’t Read</h1>
+      <p>
+        Paste policy, compliance, contract, or regulatory text and get structured outputs:
+        obligations, required data, deadlines, who it applies to, and unclear points.
+      </p>
+    </section>
+
+    <section class="card">
+      <label for="prompt">Text to analyse</label>
+      <textarea id="prompt" placeholder="Paste policy, contract, privacy terms, regulation, or guidance text here..."></textarea>
+
+      <div class="actions">
+        <button id="submitBtn">Analyse text</button>
+        <span class="hint">Best for requirement-heavy text, policies, and compliance materials.</span>
+      </div>
+
+      <div id="error" class="error" hidden></div>
+    </section>
+
+    <section class="grid">
+      <div class="panel">
+        <h3>Obligations</h3>
+        <div id="obligations"></div>
+      </div>
+      <div class="panel">
+        <h3>Required Data</h3>
+        <div id="required_data"></div>
+      </div>
+      <div class="panel">
+        <h3>Deadlines</h3>
+        <div id="deadlines"></div>
+      </div>
+      <div class="panel">
+        <h3>Applies To</h3>
+        <div id="applies_to"></div>
+      </div>
+      <div class="panel" style="grid-column: 1 / -1;">
+        <h3>Unclear Points</h3>
+        <div id="unclear_points"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const submitBtn = document.getElementById("submitBtn");
+    const promptInput = document.getElementById("prompt");
+    const errorBox = document.getElementById("error");
+
+    const fields = [
+      "obligations",
+      "required_data",
+      "deadlines",
+      "applies_to",
+      "unclear_points"
+    ];
+
+    function renderList(elementId, items) {
+      const el = document.getElementById(elementId);
+      if (!items || items.length === 0) {
+        el.innerHTML = '<div class="empty">Nothing clearly identified.</div>';
+        return;
+      }
+
+      const ul = document.createElement("ul");
+      items.forEach(item => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        ul.appendChild(li);
+      });
+
+      el.innerHTML = "";
+      el.appendChild(ul);
+    }
+
+    function renderLoading() {
+      fields.forEach(field => {
+        document.getElementById(field).innerHTML = '<div class="empty">Analysing...</div>';
+      });
+    }
+
+    function renderResult(data) {
+      fields.forEach(field => renderList(field, data[field] || []));
+    }
+
+    async function generateSummary() {
+      const prompt = promptInput.value.trim();
+      errorBox.hidden = true;
+      errorBox.textContent = "";
+
+      if (!prompt) {
+        errorBox.textContent = "Please paste some text first.";
+        errorBox.hidden = false;
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Analysing...";
+      renderLoading();
+
+      try {
+        const response = await fetch("/generate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ prompt })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Request failed with status ${response.status}`);
+        }
+
+        const data = await response.json();
+        renderResult(data);
+      } catch (error) {
+        errorBox.textContent = "Could not analyse text. Check that the backend and Ollama are both running.";
+        errorBox.hidden = false;
+        fields.forEach(field => {
+          document.getElementById(field).innerHTML = '<div class="empty">No output available.</div>';
+        });
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Analyse text";
+      }
+    }
+
+    submitBtn.addEventListener("click", generateSummary);
+  </script>
+</body>
+</html>

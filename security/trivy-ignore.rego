@@ -1,3 +1,10 @@
+# Rego files are a more sophisticated 
+# method of configuring ignore methodolody
+# for Trivy scan results. In order to demonstrate
+# both ways, this rego file is used only with the
+# local ci scan in this repo, while .trivyignore
+# is used in the CI/CD pipeline
+
 package trivy
 
 import rego.v1
