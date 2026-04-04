@@ -2,7 +2,7 @@ replicaCount: 1
 image:
   repository: ghcr.io/grainneoc/tldr-app
   pullPolicy: IfNotPresent
-  tag: abf198e40f52d8d62dc81c55a9b4608614789f96
+  tag: 52f5f115136d33452de613230d87e361189315c1
 containerPort: 8000
 imagePullSecrets: []
 nameOverride: ''
