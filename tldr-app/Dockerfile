@@ -11,6 +11,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy app code files from local repo to image filesystem
 COPY main.py llm_client.py ./
+COPY static ./static
 
 # Expecting traffic on port 8000
 EXPOSE 8000

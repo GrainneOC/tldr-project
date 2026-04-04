@@ -80,5 +80,4 @@ Text:
                 status_code=500,
                 detail=f"Model response missing or invalid field: {key}"
             )
-
     return data

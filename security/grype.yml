@@ -1,4 +1,7 @@
-# .grype.yaml (repo root) or security/grype.yaml if you pass --config
+# fail-on-severity is not given a value because
+# when you are running the pipeline with the policy check commented out, 
+# the pipeline does not fail. This is intentionally to demonstrate
+# the functionality of the `ignore` lists for false positive scan results."
 fail-on-severity: ""
 ignore:
   - vulnerability: "CVE-2017-18018"
