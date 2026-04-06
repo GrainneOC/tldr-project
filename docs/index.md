@@ -22,6 +22,7 @@ layout: default
 
   <p>
     <a href="https://github.com/GrainneOC/tldr-project">View the project</a>
+    <a href="https://canva.link/tldr-project-demo">View the video demo</a>
   </p>
 </body>
 </html>
