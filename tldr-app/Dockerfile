@@ -7,7 +7,7 @@ WORKDIR /app
 # Copy packages from requirements.txt to working directory
 COPY requirements.txt .
 # Install the packages from requirements.txt but do not store in cache
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip --no-cache-dir -r requirements.txt
 
 # Copy app code files from local repo to image filesystem
 COPY main.py llm_client.py ./
