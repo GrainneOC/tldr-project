@@ -4,7 +4,8 @@ image:
   pullPolicy: IfNotPresent
   tag: 616779081e34aa8e05e4d113ef3ba77a3fe8bd17
 containerPort: 8000
-imagePullSecrets: []
+imagePullSecrets: 
+  - name: ghcr-secret
 nameOverride: ''
 fullnameOverride: ''
 serviceAccount:
@@ -20,14 +21,15 @@ service:
   type: ClusterIP
   port: 80
 ingress:
-  enabled: false
-  className: ''
-  annotations: {}
+  enabled: true
+  className: "nginx"
+  annotations: 
+    nginx.ingress.kubernetes.io/rewrite-target: /
   hosts:
-  - host: chart-example.local
+  - host: "18.201.115.12.nip.io"
     paths:
     - path: /
-      pathType: ImplementationSpecific
+      pathType: Prefix
   tls: []
 httpRoute:
   enabled: false
