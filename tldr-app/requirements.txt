@@ -1,3 +1,5 @@
 fastapi==0.134.0
 uvicorn[standard]==0.41.0
 requests==2.32.3
+groq
+python-dotenv
