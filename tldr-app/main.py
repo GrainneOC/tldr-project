@@ -67,6 +67,8 @@ Text:
                 detail="Model did not return valid JSON."
             )
         data = json.loads(match.group())
+    except HTTPException:
+        raise
     except json.JSONDecodeError:
         raise HTTPException(
             status_code=500,
