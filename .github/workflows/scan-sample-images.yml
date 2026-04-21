@@ -52,7 +52,7 @@ jobs:
       - name: Run Grype scan
         env:
           GRYPE_DB_AUTO_UPDATE: "true"
-          GRYPE_DB_MAX_ALLOWED_BUILT_AGE: "720h"   # 30 days
+          GRYPE_DB_MAX_ALLOWED_BUILT_AGE: "1008h"   # 6 weeks
         run: |
           grype db update
           grype ${{ matrix.image }} -o json > reports/grype-${{ steps.names.outputs.safe_name }}.json
