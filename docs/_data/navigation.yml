@@ -1,0 +1,8 @@
+# _data/navigation.yml
+sidebar_links:
+  - title: View the Project
+    url: https://github.com/GrainneOC/tldr-project
+  - title: View the Video Demo 
+    url: https://canva.link/tldr-project-demo
+  - title: View the Presentation Slides
+    url: https://drive.google.com/file/d/1fM6PWslr9BrPXhtkXNUkqIOFntSM_dHH/view?usp=sharing
