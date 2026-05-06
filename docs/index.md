@@ -26,5 +26,8 @@ layout: default
   <p>
     <a href="https://canva.link/tldr-project-demo">View the video demo</a>
   </p>
+  <p>
+    <a href="https://drive.google.com/file/d/1fM6PWslr9BrPXhtkXNUkqIOFntSM_dHH/view?usp=sharing">View the Presentation Slides</a>
+  </p>
 </body>
 </html>
