@@ -5,8 +5,7 @@ title: Terms Long; Didn't Read
 
 # Terms Long; Didn't Read
   <p><strong>Gráinne O' Connor 11402918</strong></p>
-</body>
-</html>
+
 Landing page for 'Terms Long; Didn't Read' CI/CD pipeline Final Year Project as part of the Higher Diploma in Computer Science, SETU Waterford.
 
 <img width="600" height="400" alt="project_poster" src="https://github.com/user-attachments/assets/766b06dc-3b37-4cd3-8fc5-9f8bc6eac4b6" />
