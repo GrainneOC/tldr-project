@@ -18,16 +18,5 @@ layout: default
        src="https://github.com/user-attachments/assets/3b231888-10f0-47ae-948e-bbb1007faf17" />
 
   <p><strong>Gráinne O' Connor 11402918</strong></p>
-
-
-  <p>
-    <a href="https://github.com/GrainneOC/tldr-project">View the project</a>
-  </p>
-  <p>
-    <a href="https://canva.link/tldr-project-demo">View the video demo</a>
-  </p>
-  <p>
-    <a href="https://drive.google.com/file/d/1fM6PWslr9BrPXhtkXNUkqIOFntSM_dHH/view?usp=sharing">View the Presentation Slides</a>
-  </p>
 </body>
 </html>
