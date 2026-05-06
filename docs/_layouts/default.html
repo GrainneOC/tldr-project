@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{{ page.title }}</title>
+  <style>
+    body { display: flex; font-family: sans-serif; margin: 0; background: #fafafa; }
+    
+    /* Sidebar Styling */
+    .sidebar {
+      width: 280px;
+      height: 100vh;
+      background: #1a1a1a;
+      color: white;
+      padding: 30px;
+      position: fixed;
+    }
+    
+    .sidebar h2 { font-size: 1.2rem; color: #888; text-transform: uppercase; }
+    .sidebar ul { list-style: none; padding: 0; }
+    .sidebar li { margin: 20px 0; }
+    
+    .sidebar a {
+      color: #00d4ff;
+      text-decoration: none;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+
+    .sidebar a:hover { color: white; }
+
+    /* Main Content Styling */
+    .main-content {
+      margin-left: 340px; /* Offset for the sidebar */
+      padding: 50px;
+      max-width: 800px;
+    }
+    img { margin: 10px 0; border-radius: 8px; }
+  </style>
+</head>
+<body>
+
+  <nav class="sidebar">
+    <h2>Project Links</h2>
+    <ul>
+      {% for item in site.data.navigation.sidebar_links %}
+        <li><a href="{{ item.url }}" target="_blank" rel="noopener">{{ item.title }}</a></li>
+      {% endfor %}
+    </ul>
+  </nav>
+
+  <main class="main-content">
+    {{ content }}
+  </main>
+
+</body>
+</html>
