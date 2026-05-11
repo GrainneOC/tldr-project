@@ -15,8 +15,11 @@ This project investigates container image vulnerability scanning within a GitOps
 ---
 
 ## Live Deployment
+
 The application is publicly accessible at:
+
 http://18.201.115.12.nip.io
+
 It is deployed on an AWS EC2 instance (eu-west-1) running a kind Kubernetes cluster, with ArgoCD managing continuous deployment from this repository. LLM inference is provided by the Groq API (Llama3), replacing the original local Ollama dependency.
 
 ---
