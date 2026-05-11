@@ -14,6 +14,13 @@ This project investigates container image vulnerability scanning within a GitOps
 
 ---
 
+## Live Deployment
+The application is publicly accessible at:
+http://18.201.115.12.nip.io
+It is deployed on an AWS EC2 instance (eu-west-1) running a kind Kubernetes cluster, with ArgoCD managing continuous deployment from this repository. LLM inference is provided by the Groq API (Llama3), replacing the original local Ollama dependency.
+
+---
+
 ## Architecture Overview
 
 ```
@@ -39,7 +46,10 @@ Git (source of truth for manifests)
 ArgoCD auto-sync
         │
         ▼
-Kubernetes cluster (kind)
+Kubernetes cluster (kind on AWS EC2 t3.large, eu-west-1)
+        │
+        ▼
+nginx ingress → FastAPI pod → Groq API (Llama3)
 ```
 
 ArgoCD continuously reconciles the live cluster state with the desired state in Git. `selfHeal: true` ensures any manual drift is automatically corrected.
@@ -51,14 +61,16 @@ ArgoCD continuously reconciles the live cluster state with the desired state in 
 | Category | Technology |
 |---|---|
 | Application framework | FastAPI + Uvicorn |
-| LLM integration | Ollama (Llama3) |
+| LLM integration | Llama3 via Groq API (cloud deployment) / Ollama (Local development) |
 | Containerisation | Docker (`python:3.13-slim`) |
 | Container registry | GitHub Container Registry (GHCR) |
 | CI/CD | GitHub Actions |
 | Vulnerability scanners | Trivy (Aqua Security), Grype (Anchore) |
-| Kubernetes (local) | kind |
+| Kubernetes | kind (local and AWS EC2) |
 | Package management | Helm |
 | GitOps | ArgoCD |
+| Ingress | nginx ingress controller |
+| Cloud deployment | AWS EC2 t3.large, eu-west-1 |
 | Report normalisation | Python (custom scripts) |
 
 ---
@@ -67,28 +79,35 @@ ArgoCD continuously reconciles the live cluster state with the desired state in 
 
 ### tldr-app
 
-This folder contains the application code. The app is called **Terms Long; Didn't Read** - a FastAPI web service that wraps the Llama3 LLM via Ollama to summarise long policy or compliance documents in plain English. It is built on `python:3.13-slim` to keep the container image lightweight, exposes a web UI on port 8000, and is the primary image target for the vulnerability scanning pipeline. The Dockerfile follows container security best practices by using a minimal base image and installing only the dependencies required to run the service.
+This folder contains the application code. The app is called Terms Long; Didn't Read — a FastAPI web service that uses the Llama3 LLM to summarise long policy or compliance documents in plain English. It is built on python:3.13-slim to keep the container image lightweight, exposes a web UI on port 8000, and is the primary image target for the vulnerability scanning pipeline. The Dockerfile follows container security best practices by using a minimal base image and installing only the dependencies required to run the service.
+LLM integration: The application supports two modes:
 
-**Deployment note:** The application connects to Ollama via host.docker.internal, which resolves to the host machine on Docker Desktop. This means the LLM feature works locally but Ollama is not deployed inside the Kubernetes cluster. A full in-cluster deployment would require an Ollama Deployment and Service added to the Helm chart, an init container to pull the Llama3 model, an Ingress controller to expose the app externally, and sufficient GPU resources for the model to run at a practical speed. Due to hardware constraints and project scope, this was a conscious decision. The project demonstrates the full CI/CD and GitOps pipeline with the application running correctly in the local environment, and a full cluster deployment is identified as future work.
+Cloud deployment (default): Calls the Groq API using GROQ_API_KEY, which runs Llama3 on Groq's LPU hardware and responds in approximately 2 seconds. No GPU required.
+Local development: Calls a locally running Ollama instance via host.docker.internal:11434. Requires Ollama installed and llama3 pulled. Response times depend on local hardware.
+
+The active mode is determined by llm_client.py. For cloud deployment the Groq API key is stored as a Kubernetes secret and injected as an environment variable at runtime.
 
 ```
 tldr-app/
 ├── main.py           # FastAPI application and API endpoints
-├── llm_client.py     # Ollama/Llama3 HTTP wrapper
+├── llm_client.py     # Groq API / Llama3 client
 ├── static/           # Frontend HTML, CSS, JS
 ├── Dockerfile        # Container image definition
-└── requirements.txt  # Python dependencies (fastapi, uvicorn, requests)
+└── requirements.txt  # Python dependencies (fastapi, uvicorn, requests, groq, python-dotenv)
 ```
 
 ### tldr-app-chart
 
-This folder contains the Helm chart used to deploy the application to the Kubernetes cluster. Helm packages the Kubernetes resources into a reusable, parameterised chart, allowing configuration such as the image tag, replica count, and service settings to be managed through `values.yaml`. The CI pipeline automatically updates the `image.tag` field in `values.yaml` with the latest commit SHA after a successful build and scan, which is what triggers ArgoCD to detect a change and deploy the new image. Ingress and HTTPRoute are present in the chart templates but disabled by default, as external exposure of the service was outside the scope of this project.
+This folder contains the Helm chart used to deploy the application to the Kubernetes cluster. Helm packages the Kubernetes resources into a reusable, parameterised chart, allowing configuration such as the image tag, replica count, and service settings to be managed through values.yaml. The CI pipeline automatically updates the image.tag field in values.yaml with the latest commit SHA after a successful build and scan, which is what triggers ArgoCD to detect a change and deploy the new image.
 
 ```
 tldr-app-chart/
 ├── Chart.yaml        # Chart metadata
 ├── values.yaml       # Configuration values (image tag updated by CI)
 └── templates/        # Kubernetes Deployment, Service, Ingress templates
+    ├── deployment.yaml
+    ├── service.yaml
+    └── ingress.yaml  # nginx ingress — enabled for cloud deployment
 ```
 
 ### tldr-manifests
@@ -178,6 +197,7 @@ Ensure the following are installed before getting started:
 | Helm | Deploy the app chart | [helm.sh](https://helm.sh/docs/intro/install/) |
 | ArgoCD CLI (optional) | Manage ArgoCD from terminal | [argo-cd.readthedocs.io](https://argo-cd.readthedocs.io/en/stable/cli_installation/) |
 | Ollama | Run the Llama3 model locally | [ollama.com](https://ollama.com/) |
+| Groq API | Run Llama3 via Groq API by creating GROQ_API_KEY | [console.groq.com](https://console.groq.com/keys) |
 
 ---
 
@@ -192,56 +212,99 @@ cd tldr-project
 
 ### 2. Run the Application Locally
 
-Pull the Llama3 model (required for the LLM summarisation feature):
-
-```bash
-ollama pull llama3
+#### Option A — Using Groq API (recommended, fast)
+Create a .env file in tldr-app/:
+```
+GROQ_API_KEY=your_key_here
+```
+Install dependencies and start the app:
 ```
 
-Install Python dependencies and start the app:
-
-```bash
 cd tldr-app
 pip install -r requirements.txt
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
-
-The app will be available at [http://localhost:8000](http://localhost:8000).
-
-To build and run via Docker instead:
-
-```bash
-cd tldr-app
-docker build -t tldr-app:local .
-docker run -p 8000:8000 tldr-app:local
+#### Option B — Using Ollama (local LLM, slower)
+Pull the Llama3 model:
 ```
 
-### 3. Set Up the Local Kubernetes Cluster
+ollama pull llama3
+```
+Update `MODEL_NAME` in `llm_client.py` to point at your local Ollama instance, then start the app as above.
+The app will be available at http://localhost:8000.
+To build and run via Docker:
+```
 
-```bash
+cd tldr-app
+docker build -t tldr-app:local .
+docker run -p 8000:8000 -e GROQ_API_KEY=your_key_here tldr-app:local
+```
+### 3. Set Up the Local Kubernetes Cluster
+For local use, create a standard kind cluster: 
+```
+
 kind create cluster --name tldr-cluster
 kubectl cluster-info --context kind-tldr-cluster
 ```
+For a cluster with ingress support (required for public access), create with port mappings:
+```
+cat <<EOF | kind create cluster --name tldr-cluster --config=-
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+  kubeadmConfigPatches:
+  - |
+    kind: InitConfiguration
+    nodeRegistration:
+      kubeletExtraArgs:
+        node-labels: "ingress-ready=true"
+  extraPortMappings:
+  - containerPort: 80
+    hostPort: 80
+    protocol: TCP
+  - containerPort: 443
+    hostPort: 443
+    protocol: TCP
+EOF
+```
+### 4. Create Secrets
+Create the namespace and required secrets before deploying:
+```
+kubectl create namespace tldr
 
-### 4. Deploy with Helm
+# GHCR image pull secret
+kubectl create secret docker-registry ghcr-secret \
+  --docker-server=ghcr.io \
+  --docker-username=GrainneOC \
+  --docker-password=YOUR_GHCR_TOKEN \
+  --namespace tldr
 
-```bash
+# Groq API key
+kubectl create secret generic groq-secret \
+  --from-literal=GROQ_API_KEY=your_groq_key_here \
+  --namespace tldr
+```
+### 5. Deploy with Helm
+```
 helm install tldr-app ./tldr-app-chart \
   --namespace tldr \
-  --create-namespace
+  --values ./tldr-app-chart/values.yaml
 ```
-
 To upgrade after a values change:
 
-```bash
-helm upgrade tldr-app ./tldr-app-chart --namespace tldr
+```
+helm upgrade tldr-app ./tldr-app-chart \
+  --namespace tldr \
+  --values ./tldr-app-chart/values.yaml
 ```
 
 To check the deployment:
 
-```bash
+```
 kubectl get pods -n tldr
 kubectl get svc -n tldr
+kubectl get ingress -n tldr
 ```
 
 > **Note:** The service is configured as `ClusterIP` (internal only). Ingress and HTTPRoute are disabled by default in `values.yaml`. Port-forward to access locally:
@@ -249,37 +312,61 @@ kubectl get svc -n tldr
 > kubectl port-forward svc/tldr-app 8080:80 -n tldr
 > ```
 
-### 5. Set Up ArgoCD
+### 6. Install nginx Ingress Controller
+For ingress to work with kind, use the kind-specific manifest:
+```
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
 
+kubectl wait --namespace ingress-nginx \
+  --for=condition=ready pod \
+  --selector=app.kubernetes.io/component=controller \
+  --timeout=90s
+```
+### 7. Set Up ArgoCD
 Install ArgoCD into the cluster:
 
-```bash
+```
 kubectl create namespace argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 ```
 
 Access the ArgoCD UI:
 
-```bash
+```
+
 kubectl port-forward svc/argocd-server -n argocd 8080:443
 ```
 
 Retrieve the initial admin password:
 
-```bash
+```
+
 kubectl -n argocd get secret argocd-initial-admin-secret \
   -o jsonpath="{.data.password}" | base64 -d
 ```
 
-Apply the ArgoCD Application manifest from `tldr-manifests/`:
+Apply the ArgoCD Application manifest:
 
-```bash
+```
 kubectl apply -f tldr-manifests/application.yaml
 ```
 
 With `selfHeal: true` and automated sync enabled, ArgoCD will automatically deploy any image tag updates committed to `values.yaml` by the CI pipeline.
 
 ---
+## Cloud Deployment (AWS EC2)
+The application is deployed to an AWS EC2 instance running a kind Kubernetes cluster. The setup mirrors the local Kubernetes deployment with the following differences:
+| Aspect | Local | AWS EC2 |
+|---|---|---|
+| Cluster | kind (laptop) | kind (t3.large, eu-west-1) |
+| LLM | Ollama or Groq | Groq API only |
+| App access | port-forward | nginx ingress + nip.io |
+| ArgoCD | local sync | syncs from GitHub |
+| Public URL | none | http://18.201.115.12.nip.io |
+
+The EC2 instance requires port 80 and port 443 open in the security group inbound rules. The kind cluster must be created with `extraPortMappings` (see step 3 above) for the nginx ingress controller to bind to the host network.
+The `GROQ_API_KEY` is stored as a Kubernetes secret (`groq-secret`) and injected into the FastAPI pod at runtime via the deployment template environment variable configuration.
+Note on kind and cloud providers: A production deployment would use a managed Kubernetes service such as GKE or EKS, which provides a real cloud load balancer, automatic external IP assignment, and cluster resilience across node failures. kind on EC2 is used here to demonstrate the full GitOps pipeline within the project scope. The kind cluster does not survive an EC2 instance reboot - it would need to be recreated.
 
 ## CI/CD Pipeline
 
@@ -315,7 +402,7 @@ Trivy and Grype must be installed locally for this to work. Results will be writ
 
 A GitHub Pages site for this project is available at [https://bit.ly/tldr-project](https://bit.ly/tldr-project).
 
-It includes a project poster and showcase photo. Links to the video demonstration and presentation slides will be added on completion.
+It includes links to the video demonstration, presentation slides and final report.
 
 ---
 
